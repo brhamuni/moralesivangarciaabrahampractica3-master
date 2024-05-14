@@ -1,4 +1,4 @@
-package es.ujaen.ssccdd.curso2023_24;
+package es.ujaen.ssccdd.curso2023_24.Procesos;
 
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
@@ -108,9 +108,9 @@ public class ClienteParticular implements Runnable {
             if (Numero_Aleatorio.nextInt(100) < PROBABILIDAD_CANCELACION ) {
                 CancelarReserva(Respuesta_Servidor);
                 Respuesta_Servidor = RecibirMensaje(Respuesta_Cancelacion);
-                System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' tristemente y finalmente NO SE VA DE VACACIONES. ");
+                System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' finalmente no se va de vacaciones. ");
             }else{
-                System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' SE VA DE VACACIONES. ");
+                System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' se va de vacaciones. ");
             }
         }
     }

@@ -5,7 +5,7 @@ public interface Constantes {
     Random Numero_Aleatorio = new Random();
 
     enum NombreAgencias {
-        Viajes_Carrefour, Corte_Ingles, Halcon_Viajes, travelPerk;
+        Viajes_Carrefour, Corte_Ingles, Halcon_Viajes, Travel_Perk;
         public static NombreAgencias getNombre(){
             return Estados_Disponibles_Agencias[Numero_Aleatorio.nextInt(Estados_Disponibles_Agencias.length)];
         }
@@ -15,13 +15,6 @@ public interface Constantes {
         Barcelona, Madrid, Berlin, Maldivas, Paris, Tokio, Manchester, NewYork, Dubai, Roma, Londres, Venecia;
         public static LugaresViaje getNombreViajes(){
             return Estados_Nombre_Lugares[Numero_Aleatorio.nextInt(Estados_Nombre_Lugares.length)];
-        }
-    }
-
-    enum TipoTurismo{
-        Turismo_Cultural, Turismo_Rural, Turismo_Playa, Turismo_Negocios;
-        public static TipoTurismo getTipoTurismo(){
-            return Estados_Disponibles_Turismo[Numero_Aleatorio.nextInt(Estados_Disponibles_Turismo.length)];
         }
     }
 
@@ -52,7 +45,6 @@ public interface Constantes {
 
     NombreAgencias[] Estados_Disponibles_Agencias = NombreAgencias.values();
     LugaresViaje[]  Estados_Nombre_Lugares = LugaresViaje.values();
-    TipoTurismo[] Estados_Disponibles_Turismo = TipoTurismo.values();
     NombreUsuarios[] Estados_Disponibles_Usuarios = NombreUsuarios.values();
     NombreEstancia[] Estados_Disponibles_Estancia = NombreEstancia.values();
     TipoMensaje[] Estados_Disponibles_Mensajes = TipoMensaje.values();

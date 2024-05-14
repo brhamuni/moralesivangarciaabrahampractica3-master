@@ -1,21 +1,12 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package es.ujaen.ssccdd.curso2023_24.Utils;
+import com.google.gson.*;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-
-/**
- * Clase que nos proporciona la utilidad para codificar un objeto de tipo T
- * a su objeto String en formato JSON y la utilidad inversa
- * @author pedroj
- */
 public class GsonUtil<T> {
     private final Gson gson;
 
+    /**
+     * @brief Constructor por defecto de la clase GsonUtil.
+     */
     public GsonUtil() {
         this.gson = new GsonBuilder().create();
     }

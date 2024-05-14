@@ -1,6 +1,8 @@
 package es.ujaen.ssccdd.curso2023_24;
 
-import es.ujaen.ssccdd.curso2023_24.Utils.GestionViaje;
+import es.ujaen.ssccdd.curso2023_24.Procesos.AgenciaViajes;
+import es.ujaen.ssccdd.curso2023_24.Procesos.ClienteParticular;
+import es.ujaen.ssccdd.curso2023_24.Procesos.GestionViaje;
 import es.ujaen.ssccdd.curso2023_24.Utils.TareaFinalizacion;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,8 +50,8 @@ public class Main {
         Fin_Ejecucion.acquire();
         Ejecucion_Procesos.shutdown();
         Ejecucion.shutdown();
-        Ejecucion_Procesos.awaitTermination(1, TimeUnit.MINUTES );
-        Ejecucion.awaitTermination(1, TimeUnit.MINUTES );
+        Ejecucion_Procesos.awaitTermination(1, TimeUnit.SECONDS );
+        Ejecucion.awaitTermination(1, TimeUnit.SECONDS );
     }
 
     public static void main(String[] args) throws InterruptedException {

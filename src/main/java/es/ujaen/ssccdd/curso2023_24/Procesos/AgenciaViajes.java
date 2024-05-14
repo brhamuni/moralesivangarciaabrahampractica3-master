@@ -1,4 +1,4 @@
-package es.ujaen.ssccdd.curso2023_24;
+package es.ujaen.ssccdd.curso2023_24.Procesos;
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;

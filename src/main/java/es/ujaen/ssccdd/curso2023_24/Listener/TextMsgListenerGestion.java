@@ -1,6 +1,6 @@
 package es.ujaen.ssccdd.curso2023_24.Listener;
 
-import es.ujaen.ssccdd.curso2023_24.ClienteParticular;
+import es.ujaen.ssccdd.curso2023_24.Procesos.ClienteParticular;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
 import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
 

@@ -1,7 +1,11 @@
-package es.ujaen.ssccdd.curso2023_24.Utils;
+package es.ujaen.ssccdd.curso2023_24.Procesos;
 
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerGestion;
+import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
+import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
+import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
+import es.ujaen.ssccdd.curso2023_24.Utils.Viaje;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import javax.jms.*;
 import java.util.ArrayList;
@@ -10,6 +14,10 @@ import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * @class GestionViaje
+ * @brief Clase que implementa la gestión de viajes.
+ */
 public class GestionViaje implements Runnable {
 
     private final Integer Num_Clientes;
@@ -39,7 +47,12 @@ public class GestionViaje implements Runnable {
     private final Destination[] Realizacion_Reserva;
     private final Destination[][] Confirmacion_Reserva;
 
-
+    /**
+     * @brief Constructor parametrizado de la clase GestionViaje.
+     * @param Num_Clientes Número de clientes.
+     * @param Sem_Clientes_Particulares Array de semáforos para clientes particulares.
+     * @param Sem_Agencias_Viaje Array de semáforos para agencias de viaje.
+     */
     public GestionViaje(int Num_Clientes, Semaphore Sem_Clientes_Particulares[], Semaphore Sem_Agencias_Viaje[]){
 
         this.Num_Clientes = Num_Clientes;
@@ -74,6 +87,7 @@ public class GestionViaje implements Runnable {
 
     }
 
+
     @Override
     public void run() {
        System.out.println("GestionViajes Comienza ejecucion");
@@ -88,6 +102,10 @@ public class GestionViaje implements Runnable {
        }
     }
 
+    /**
+     * @brief  Método para preparar las conexiones y sesiones antes de ejecutar las operaciones del servidor.
+     * @throws Exception  Si ocurre algún error durante la configuración de las conexiones y sesiones.
+     */
     public void before() throws Exception{
 
         connectionFactory = new ActiveMQConnectionFactory(BROKER_URL);
@@ -117,7 +135,6 @@ public class GestionViaje implements Runnable {
             Respuesta_Cancelacion[1][i] = session.createQueue(QUEUE+"Respuesta_Cancelacion.Agencia"+i);
         }
 
-        //region Inicializacion MessageConsumer
 
         MessageConsumer Consumer_Cliente_Disponibilidad = session.createConsumer(Preguntar_Disponibilidad[0]);
         TextMsgListenerGestion Listener_Disponibilidad_Cliente = new TextMsgListenerGestion("Disponibilidad Cliente",Lista_Cliente_Particular);
@@ -152,14 +169,15 @@ public class GestionViaje implements Runnable {
         TextMsgListenerGestion Listener_Agencia_Cancelacion = new TextMsgListenerGestion("Cancelacion",Lista_Cancelacion);
         Consumer_Agencia_Cancelacion.setMessageListener(Listener_Agencia_Cancelacion);
 
-        //endregion
-
         connection.start();
     }
 
+    /**
+     * @brief Método principal donde se gestiona la disponibilidad, reservas, pagos y cancelaciones de los viajes.
+     * @throws Exception Si ocurre algún error durante la ejecución.
+     */
     public void execution() throws Exception {
         while(true){
-            TimeUnit.SECONDS.sleep(4);
             ComprobarDisponibilidad();
             ComprobarSolicitudReserva();
             ComprobarPagoReserva();
@@ -167,6 +185,11 @@ public class GestionViaje implements Runnable {
         }
     }
 
+    /**
+     * @brief Método que comprueba la disponibilidad de viajes y estancias.
+     * @throws JMSException Si ocurre algún error relacionado con JMS.
+     * @throws InterruptedException Si la operación es interrumpida.
+     */
     private void ComprobarDisponibilidad() throws JMSException, InterruptedException{
 
         Mensaje Pregunta_Cliente;
@@ -204,6 +227,11 @@ public class GestionViaje implements Runnable {
 
     }
 
+    /**
+     * @brief Método que comprueba la solicitud de reserva de viajes y estancias.
+     * @throws JMSException Si ocurre algún error relacionado con JMS.
+     * @throws InterruptedException Si la operación es interrumpida.
+     */
     private void ComprobarSolicitudReserva() throws JMSException, InterruptedException{
         if( !Lista_Reservas.isEmpty() ){
             Mensaje Peticion_Reserva = Lista_Reservas.remove(0);
@@ -251,6 +279,11 @@ public class GestionViaje implements Runnable {
         }
     }
 
+    /**
+     * @brief Método que comprueba el pago de las reservas de viajes y estancias.
+     * @throws JMSException Si ocurre algún error relacionado con JMS.
+     * @throws InterruptedException Si la operación es interrumpida.
+     */
     private void ComprobarPagoReserva() throws JMSException, InterruptedException{
         if(!Lista_Pago.isEmpty()) {
             Mensaje Pago_Reserva = Lista_Pago.remove(0);
@@ -265,6 +298,11 @@ public class GestionViaje implements Runnable {
         }
     }
 
+    /**
+     * @brief Método que comprueba la solicitud de cancelación de viajes y estancias.
+     * @throws JMSException Si ocurre algún error relacionado con JMS.
+     * @throws InterruptedException Si la operación es interrumpida.
+     */
     private void ComprobarSolicitudCancelacion() throws JMSException, InterruptedException{
         if(!Lista_Cancelacion.isEmpty()) {
             Mensaje Peticion_Cancelacion = Lista_Cancelacion.remove(0);
@@ -278,6 +316,10 @@ public class GestionViaje implements Runnable {
         }
     }
 
+    /**
+     * @brief Método que obtiene la lista de viajes disponibles.
+     * @param Datos_Disponibilidad Objeto Mensaje que contiene los datos de disponibilidad.
+     */
     private void ObtenerViajesDisponibles(Mensaje Datos_Disponibilidad) {
         for (int i = 0; i < Lista_Viajes.size(); ++i) {
             if (Lista_Viajes.get(i).getPlazasDisponibles() > 0) {
@@ -286,6 +328,10 @@ public class GestionViaje implements Runnable {
         }
     }
 
+    /**
+     * @brief Método que obtiene la lista de estancias disponibles.
+     * @param Datos_Disponibilidad Objeto Mensaje que contiene los datos de disponibilidad.
+     */
     private void ObtenerEstanciasDisponibles(Mensaje Datos_Disponibilidad){
         for( int i=0; i<Lista_Estancias.size(); ++i ){
             if( Lista_Estancias.get(i).getPlazas_Disponibles() > 0){
@@ -294,6 +340,11 @@ public class GestionViaje implements Runnable {
         }
     }
 
+    /**
+     * @brief Método que comprueba la disponibilidad de una reserva de viaje.
+     * @param Peticion_Reserva Objeto Mensaje que contiene los datos de la reserva.
+     * @return true si el viaje está disponible, false en caso contrario.
+     */
     private boolean ComprobarViajeReserva( Mensaje Peticion_Reserva ){
         for( int i=0; i<Lista_Viajes.size(); ++i ){
             if( Lista_Viajes.get(i).getID() == Peticion_Reserva.getNum_Viaje() ){
@@ -305,6 +356,11 @@ public class GestionViaje implements Runnable {
         return false;
     }
 
+    /**
+     * @brief Método que comprueba la disponibilidad de una reserva de estancia.
+     * @param Peticion_Reserva Objeto Mensaje que contiene los datos de la reserva.
+     * @return true si la estancia está disponible, false en caso contrario.
+     */
     private boolean ComprobarEstanciaReserva(Mensaje Peticion_Reserva){
         for( int i=0; i<Lista_Estancias.size(); ++i ){
             if( Lista_Estancias.get(i).getId() == Peticion_Reserva.getNum_Estancia() ){
@@ -316,12 +372,24 @@ public class GestionViaje implements Runnable {
         return false;
     }
 
+    /**
+     * @brief Método que obtiene el tiempo que un cliente particular lleva esperando.
+     * @return El tiempo en segundos que el cliente lleva esperando.
+     */
     private long ObtenerTiempoEsperando(){
         Date actual = new Date();
         long Tiempo_Esperando = actual.getTime() - Lista_Cliente_Particular.get(0).getFecha().getTime();
         return Tiempo_Esperando = TimeUnit.SECONDS.convert(Tiempo_Esperando, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * @brief Método que envía un mensaje a un buzón específico y libera el semáforo correspondiente.
+     * @param MensajeCliente Objeto Mensaje que contiene los datos del cliente.
+     * @param Buzon Destino del mensaje.
+     * @param Semaforo_Desbloquear Semáforo a liberar después de enviar el mensaje.
+     * @throws JMSException Si ocurre algún error relacionado con JMS.
+     * @throws InterruptedException Si la operación es interrumpida.
+     */
     private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon, Semaphore Semaforo_Desbloquear) throws JMSException,InterruptedException{
 
         GsonUtil<Mensaje> gsonUtil = new GsonUtil();
@@ -334,6 +402,9 @@ public class GestionViaje implements Runnable {
 
     }
 
+    /**
+     * @brief Método que cierra la conexión y la sesión JMS.
+     */
     public void after() {
         try {
             if (connection != null) {

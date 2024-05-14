@@ -19,6 +19,9 @@ public class Mensaje {
     private final List<Estancia> Lista_Estancias_Disponibles;
     private Date fecha;
 
+    /**
+     * @brief Constructor por defecto de la clase Mensaje
+     */
     public Mensaje(){
         this.Tipo_Cliente = null;
         this.Tipo_Mensaje = null;
@@ -31,6 +34,14 @@ public class Mensaje {
         this.Lista_Estancias_Disponibles = new ArrayList<>();
         this.fecha = null;
     }
+
+    /**
+     * @brief Constructor parametrizado de la clase Mensaje
+     * @param tipo_Cliente
+     * @param tipo_Mensaje
+     * @param nombre_Cliente
+     * @param Id_Cliente
+     */
     public Mensaje(TipoCliente tipo_Cliente, TipoMensaje tipo_Mensaje, String nombre_Cliente, int Id_Cliente) {
         this.Tipo_Cliente = tipo_Cliente;
         this.Tipo_Mensaje = tipo_Mensaje;
@@ -44,6 +55,9 @@ public class Mensaje {
         this.fecha = new Date();
     }
 
+    /**
+     * @brief Metodo toString de la clase Mensaje
+     */
     @Override
     public String toString() {
         if( Tipo_Mensaje == TipoMensaje.CLIENTE ){
