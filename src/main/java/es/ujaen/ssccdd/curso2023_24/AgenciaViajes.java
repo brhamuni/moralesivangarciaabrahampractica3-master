@@ -12,9 +12,10 @@ import java.util.concurrent.*;
 import java.util.logging.*;
 
 
-public class AgenciaViajes implements Runnable {
+public class AgenciaViajes implements Runnable{
     private final int Id;
     private final String Nombre;
+    private final Semaphore Sem_Agencias_Viaje[];
 
     private ActiveMQConnectionFactory connectionFactory;
     private Connection connection;
@@ -29,10 +30,15 @@ public class AgenciaViajes implements Runnable {
     private Destination Preguntar_Disponibilidad;
     private List<Destination> Respuesta_Disponibilidad;
 
-
-    public AgenciaViajes(int Id, int Num_Clientes) {
+    /**
+     * @brief Constructor parametrizado de la clase AgenciaViajes.
+     * @param Id Número de identificación unico del cliente.
+     * @param Num_Clientes Número de clientes asociados a la clase cliente particular.
+     */
+    public AgenciaViajes(int Id, int Num_Clientes, Semaphore Sem_Agencias_Viaje[]) {
         this.Id = Id;
         this.Nombre = "" + NombreAgencias.getNombre();
+        this.Sem_Agencias_Viaje = Sem_Agencias_Viaje;
 
         Realizacion_Pago = null;
         Realizacion_Cancelacion = null;
@@ -61,6 +67,10 @@ public class AgenciaViajes implements Runnable {
         }
     }
 
+    /**
+     * @brief  Método para preparar las conexiones y sesiones antes de ejecutar las operaciones del cliente.
+     * @throws Exception  Si ocurre algún error durante la configuración de las conexiones y sesiones.
+     */
     public void before() throws Exception{
         connectionFactory = new ActiveMQConnectionFactory(BROKER_URL);
         connection = connectionFactory.createConnection();
@@ -79,33 +89,37 @@ public class AgenciaViajes implements Runnable {
         connection.start();
     }
 
-
-
     public void execution() throws Exception {
         ComprobarDisponibilidad();
-
+        TimeUnit.SECONDS.sleep(5);
         Mensaje Respuesta_Servidor = RecibirMensaje(Respuesta_Disponibilidad);
         System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' recibe los viajes disponibles ");
+
         RealizarReserva(Respuesta_Servidor);
+        TimeUnit.SECONDS.sleep(5);
         Respuesta_Servidor = RecibirMensaje(Confirmacion_Reserva);
 
         if(!Respuesta_Servidor.isReserva_Correcta()){
             System.out.println( "La peticion de reserva de la agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' no se ha podido realizar");
         }else {
             RealizarPagoReserva(Respuesta_Servidor);
+            TimeUnit.SECONDS.sleep(3);
             Respuesta_Servidor = RecibirMensaje(Confirmacion_Pago);
-            System.out.println( "El pago del cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' se ha realizado correctamente");
-
-            if (Numero_Aleatorio.nextInt(100) < PROBABILIDAD_CANCELACION) {
+            if (Numero_Aleatorio.nextInt(100) < PROBABILIDAD_CANCELACION ) {
                 CancelarReserva(Respuesta_Servidor);
+                TimeUnit.SECONDS.sleep(3);
                 Respuesta_Servidor = RecibirMensaje(Respuesta_Cancelacion);
+                System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' tristemente y finalmente NO SE VA DE VACACIONES. ");
             }else{
                 System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' SE VA DE VACACIONES. ");
             }
         }
     }
 
-
+    /**
+     * @brief Método que envia un mensaje al servidor preguntando por la disponibilidad de viajes y estancias.
+     * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
+     */
     public void ComprobarDisponibilidad() throws JMSException{
 
         Mensaje Datos_Cliente = new Mensaje(TipoCliente.AGENCIA,TipoMensaje.CLIENTE,Nombre,Id);
@@ -114,6 +128,11 @@ public class AgenciaViajes implements Runnable {
 
     }
 
+    /**
+     * @brief Método que envia un mensaje al servidor con una reserva de una estancio y\o viaje.
+     * @param Respuesta Mensaje que contiene la información sobre las opciones disponibles.
+     * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
+     */
     public void RealizarReserva(Mensaje Respuesta) throws JMSException{
 
         int Num_Viaje = -1, Num_Estancia = -1;
@@ -150,6 +169,11 @@ public class AgenciaViajes implements Runnable {
 
     }
 
+    /**
+     * @brief Método que realiza el pago y envia un mensaje al servidor de verificacion.
+     * @param Respuesta Mensaje que contiene la información de la reserva.
+     * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
+     */
     public void RealizarPagoReserva(Mensaje Respuesta) throws JMSException{
 
         double Pago_Total = 0;
@@ -168,6 +192,11 @@ public class AgenciaViajes implements Runnable {
 
     }
 
+    /**
+     * @brief Método para enviar un mensaje al servidor pidiendo la cancelacion de la reserva previamente hecha.
+     * @param MensajeCancelacion Mensaje que contiene la información de la reserva.
+     * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
+     */
     public void CancelarReserva(Mensaje MensajeCancelacion) throws JMSException{
 
         MensajeCancelacion.setTipo_Mensaje(TipoMensaje.CANCELACION);
@@ -176,7 +205,12 @@ public class AgenciaViajes implements Runnable {
 
     }
 
-
+    /**
+     * @brief Método para codificar y enviar un mensaje al servidor de GestionViajes.
+     * @param MensajeCliente Mensaje que va a ser codificado y posteriormente enviado al servidor.
+     * @param Buzon Buzon por dónde se va a enviar el mensaje.
+     * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
+     */
     private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon) throws JMSException{
         GsonUtil<Mensaje> gsonUtil = new GsonUtil();
         MessageProducer producer = session.createProducer(Buzon);
@@ -186,6 +220,12 @@ public class AgenciaViajes implements Runnable {
         producer.close();
     }
 
+    /**
+     * @brief Metodo que recibe un mensaje del servidor y lo decodifica.
+     * @param Buzon Buzon por donde se va a recibir el mensaje.
+     * @return El mensaje recibido del servidor decodificado.
+     * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
+     */
     private Mensaje RecibirMensaje(List<Destination> Buzon) throws JMSException{
         MessageConsumer consumer = session.createConsumer(Buzon.get(Id));
         TextMessage msg = (TextMessage) consumer.receive();
@@ -200,6 +240,9 @@ public class AgenciaViajes implements Runnable {
         return Respuesta_GestionViaje;
     }
 
+    /**
+     * @brief Método que cierra la conexión con el servidor, liberando todos los recursos asociados.
+     */
     public void after() {
         try {
             if (connection != null) {

@@ -70,14 +70,14 @@ public interface Constantes {
     public static final double MAX_PRECIO_ESTANCIA = 900.0;
     public static final double MIN_PRECIO_VIAJE = 500.0;
     public static final double MAX_PRECIO_VIAJE = 3000.0;
-    public static final int PROBABILIDAD_CANCELACION = 20;
-    public static final int PROBABILIDAD_VIAJE = 75;
-    public static final int PROBABILIDAD_ESTANCIA = 75;
+    public static final int PROBABILIDAD_CANCELACION = 50;
+    public static final int PROBABILIDAD_VIAJE = 85;
+    public static final int PROBABILIDAD_ESTANCIA = 85;
     public static double PENALIZACION_POR_CANCELACION = 1.2;
 
     //Para el hilo principal
-    public static final int MAX_CLIENTES = 3;
-    public static final int MIN_CLIENTES = 2;
+    public static final int MAX_CLIENTES = 4;
+    public static final int MIN_CLIENTES = 3;
     public static final int TIEMPO_EJECUCION = 50;
     public static final int TIEMPO_ESPERA_MENSAJE = 1;
     public static final int TIEMPO_MAXIMO_ESPERADO = 3;
