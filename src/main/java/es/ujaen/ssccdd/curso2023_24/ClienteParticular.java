@@ -1,8 +1,6 @@
 package es.ujaen.ssccdd.curso2023_24;
 
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
-
-
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
 import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
@@ -12,6 +10,7 @@ import javax.jms.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.logging.*;
+
 
 public class ClienteParticular implements Runnable {
     private final int Id;
@@ -30,7 +29,11 @@ public class ClienteParticular implements Runnable {
     private Destination Preguntar_Disponibilidad;
     private Destination[] Respuesta_Disponibilidad;
 
-
+    /**
+     * @brief
+     * @param Id
+     * @param Num_Clientes
+     */
     public ClienteParticular(int Id, int Num_Clientes) {
         this.Id = Id;
         this.Nombre = "" + NombreUsuarios.getNombre();
@@ -44,7 +47,6 @@ public class ClienteParticular implements Runnable {
         Respuesta_Cancelacion = new Destination[Num_Clientes];
         Confirmacion_Reserva = new Destination[Num_Clientes];
         Respuesta_Disponibilidad = new Destination[Num_Clientes];
-
     }
 
 

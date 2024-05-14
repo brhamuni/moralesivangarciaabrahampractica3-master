@@ -15,7 +15,6 @@ import java.util.logging.*;
 public class AgenciaViajes implements Runnable {
     private final int Id;
     private final String Nombre;
-    private Semaphore Espera_Mensaje;
 
     private ActiveMQConnectionFactory connectionFactory;
     private Connection connection;
@@ -34,7 +33,6 @@ public class AgenciaViajes implements Runnable {
     public AgenciaViajes(int Id, int Num_Clientes) {
         this.Id = Id;
         this.Nombre = "" + NombreAgencias.getNombre();
-        this.Espera_Mensaje = new Semaphore(0);
 
         Realizacion_Pago = null;
         Realizacion_Cancelacion = null;
@@ -68,7 +66,6 @@ public class AgenciaViajes implements Runnable {
         connection = connectionFactory.createConnection();
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-
         Realizacion_Pago = session.createQueue(QUEUE+"Realizacion_Pago.Agencia");
         Realizacion_Reserva = session.createQueue(QUEUE+"Realizacion_Reserva.Agencia");
         Realizacion_Cancelacion = session.createQueue(QUEUE+"Realizacion_Cancelacion.Agencia");
@@ -85,7 +82,6 @@ public class AgenciaViajes implements Runnable {
 
 
     public void execution() throws Exception {
-        Espera_Mensaje.acquire();
         ComprobarDisponibilidad();
 
         Mensaje Respuesta_Servidor = RecibirMensaje(Respuesta_Disponibilidad);

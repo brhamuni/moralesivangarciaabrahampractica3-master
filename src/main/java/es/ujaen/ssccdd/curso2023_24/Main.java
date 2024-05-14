@@ -61,7 +61,7 @@ public class Main {
         // Cuerpo de ejecución
         System.out.println( "Hilo(Principal) Comienza su ejecución " );
 
-        CreacionEjecucionGestionViaje(Ejecucion_Procesos,Lista_Tareas, NUM_GESTION_VIAJES);
+        CreacionEjecucionGestionViaje(Ejecucion_Procesos,Lista_Tareas, NUM_CLIENTES );
         CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
         //CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
 

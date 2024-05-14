@@ -76,8 +76,8 @@ public interface Constantes {
     public static double PENALIZACION_POR_CANCELACION = 1.2;
 
     //Para el hilo principal
-    public static final int MAX_CLIENTES = 4;
-    public static final int MIN_CLIENTES = 3;
+    public static final int MAX_CLIENTES = 3;
+    public static final int MIN_CLIENTES = 2;
     public static final int TIEMPO_EJECUCION = 50;
     public static final int TIEMPO_ESPERA_MENSAJE = 1;
     public static final int TIEMPO_MAXIMO_ESPERADO = 3;
