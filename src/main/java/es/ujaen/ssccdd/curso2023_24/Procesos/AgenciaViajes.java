@@ -1,6 +1,6 @@
 package es.ujaen.ssccdd.curso2023_24.Procesos;
-import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 
+import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
 import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
@@ -12,44 +12,43 @@ import java.util.concurrent.*;
 import java.util.logging.*;
 
 
-public class AgenciaViajes implements Runnable{
+public class AgenciaViajes implements Runnable {
     private final int Id;
     private final String Nombre;
-    private final Semaphore Sem_Agencias_Viaje[];
+    private final Semaphore Sem_Agencia_Viajes[];
 
     private ActiveMQConnectionFactory connectionFactory;
     private Connection connection;
     private Session session;
 
     private Destination Realizacion_Pago;
-    private List<Destination> Confirmacion_Pago;
+    private Destination[] Confirmacion_Pago;
     private Destination Realizacion_Cancelacion;
-    private List<Destination> Respuesta_Cancelacion;
+    private Destination[] Respuesta_Cancelacion;
     private Destination Realizacion_Reserva;
-    private List<Destination> Confirmacion_Reserva;
+    private Destination[] Confirmacion_Reserva;
     private Destination Preguntar_Disponibilidad;
-    private List<Destination> Respuesta_Disponibilidad;
+    private Destination[] Respuesta_Disponibilidad;
 
     /**
      * @brief Constructor parametrizado de la clase AgenciaViajes.
      * @param Id Número de identificación unico del cliente.
      * @param Num_Clientes Número de clientes asociados a la clase cliente particular.
      */
-    public AgenciaViajes(int Id, int Num_Clientes, Semaphore Sem_Agencias_Viaje[]) {
+    public AgenciaViajes(int Id, int Num_Clientes, Semaphore Sem_Agencia_Viajes[]) {
         this.Id = Id;
         this.Nombre = "" + NombreAgencias.getNombre();
-        this.Sem_Agencias_Viaje = Sem_Agencias_Viaje;
+        this.Sem_Agencia_Viajes = Sem_Agencia_Viajes;
 
         Realizacion_Pago = null;
         Realizacion_Cancelacion = null;
         Realizacion_Reserva = null;
         Preguntar_Disponibilidad = null;
 
-        Confirmacion_Pago = new ArrayList<>(Num_Clientes);
-        Respuesta_Cancelacion = new ArrayList<>(Num_Clientes);
-        Confirmacion_Reserva = new ArrayList<>(Num_Clientes);
-        Respuesta_Disponibilidad = new ArrayList<>(Num_Clientes);
-
+        Confirmacion_Pago = new Destination[Num_Clientes];
+        Respuesta_Cancelacion = new Destination[Num_Clientes];
+        Confirmacion_Reserva = new Destination[Num_Clientes];
+        Respuesta_Disponibilidad = new Destination[Num_Clientes];
     }
 
 
@@ -72,46 +71,46 @@ public class AgenciaViajes implements Runnable{
      * @throws Exception  Si ocurre algún error durante la configuración de las conexiones y sesiones.
      */
     public void before() throws Exception{
+
         connectionFactory = new ActiveMQConnectionFactory(BROKER_URL);
         connection = connectionFactory.createConnection();
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-        Realizacion_Pago = session.createQueue(QUEUE+"Realizacion_Pago.Agencia");
-        Realizacion_Reserva = session.createQueue(QUEUE+"Realizacion_Reserva.Agencia");
-        Realizacion_Cancelacion = session.createQueue(QUEUE+"Realizacion_Cancelacion.Agencia");
         Preguntar_Disponibilidad = session.createQueue(QUEUE+"Preguntar_Disponibilidad.Agencia");
+        Realizacion_Reserva = session.createQueue(QUEUE+"Realizacion_Reserva.Agencia");
+        Realizacion_Pago = session.createQueue(QUEUE+"Realizacion_Pago.Agencia");
+        Realizacion_Cancelacion = session.createQueue(QUEUE+"Realizacion_Cancelacion.Agencia");
 
-        Confirmacion_Pago.add(session.createQueue(QUEUE+"Confirmacion_Pago.Agencia"+Id));
-        Respuesta_Cancelacion.add(session.createQueue(QUEUE+"Respuesta_Cancelacion.Agencia"+Id));
-        Confirmacion_Reserva.add(session.createQueue(QUEUE+"Confirmacion_Reserva.Agencia"+Id));
-        Respuesta_Disponibilidad.add(session.createQueue(QUEUE+"Respuesta_Disponibilidad.Agencia"+Id));
+        Respuesta_Disponibilidad[Id] = session.createQueue(QUEUE+"Respuesta_Disponibilidad.Agencia"+Id);
+        Confirmacion_Reserva[Id] = session.createQueue(QUEUE+"Confirmacion_Reserva.Agencia"+Id);
+        Confirmacion_Pago[Id] = session.createQueue(QUEUE+"Confirmacion_Pago.Agencia"+Id);
+        Respuesta_Cancelacion[Id] = session.createQueue(QUEUE+"Respuesta_Cancelacion.Agencia"+Id);
 
         connection.start();
     }
 
+
     public void execution() throws Exception {
+
         ComprobarDisponibilidad();
-        TimeUnit.SECONDS.sleep(5);
         Mensaje Respuesta_Servidor = RecibirMensaje(Respuesta_Disponibilidad);
         System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' recibe los viajes disponibles ");
 
         RealizarReserva(Respuesta_Servidor);
-        TimeUnit.SECONDS.sleep(5);
         Respuesta_Servidor = RecibirMensaje(Confirmacion_Reserva);
-
+        System.out.println("El valor de la Reserva Correcta es " + Respuesta_Servidor.isReserva_Correcta());
         if(!Respuesta_Servidor.isReserva_Correcta()){
             System.out.println( "La peticion de reserva de la agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' no se ha podido realizar");
         }else {
             RealizarPagoReserva(Respuesta_Servidor);
-            TimeUnit.SECONDS.sleep(3);
             Respuesta_Servidor = RecibirMensaje(Confirmacion_Pago);
-            if (Numero_Aleatorio.nextInt(100) < PROBABILIDAD_CANCELACION ) {
+
+            if (Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
                 CancelarReserva(Respuesta_Servidor);
-                TimeUnit.SECONDS.sleep(3);
                 Respuesta_Servidor = RecibirMensaje(Respuesta_Cancelacion);
-                System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' tristemente y finalmente NO SE VA DE VACACIONES. ");
+                System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' finalmente no se va de vacaciones. ");
             }else{
-                System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' SE VA DE VACACIONES. ");
+                System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' se va de vacaciones. ");
             }
         }
     }
@@ -121,11 +120,10 @@ public class AgenciaViajes implements Runnable{
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
     public void ComprobarDisponibilidad() throws JMSException{
-
-        Mensaje Datos_Cliente = new Mensaje(TipoCliente.AGENCIA,TipoMensaje.CLIENTE,Nombre,Id);
-        EnviarMensaje(Datos_Cliente,Preguntar_Disponibilidad);
+        Mensaje Datos_Agencia = new Mensaje(TipoCliente.AGENCIA,TipoMensaje.CLIENTE, Nombre, Id);
+        System.out.println("El nombre que contiene el mensaje es: " + Datos_Agencia.getNombre_Cliente());
+        EnviarMensaje(Datos_Agencia,Preguntar_Disponibilidad);
         System.out.println("Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje solicitando las disponibilidades. ");
-
     }
 
     /**
@@ -136,16 +134,22 @@ public class AgenciaViajes implements Runnable{
     public void RealizarReserva(Mensaje Respuesta) throws JMSException{
 
         int Num_Viaje = -1, Num_Estancia = -1;
-        boolean Elegir_Viaje = Numero_Aleatorio.nextBoolean();
-        boolean Elegir_Estancia = Numero_Aleatorio.nextBoolean();
-        boolean Cancelacion = Numero_Aleatorio.nextBoolean();
+        boolean Elegir_Estancia = false;
+        boolean Elegir_Viaje = false;
+        boolean Cancelacion = false;
+        if (Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_VIAJE){
+            Elegir_Viaje=true;
+        }
+        if (Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_ESTANCIA){
+            Elegir_Estancia=true;
+        }
+        if (Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_CANCELACION){
+            Cancelacion=true;
+        }
         List<Viaje> Lista_Viajes = Respuesta.getLista_Viajes_Disponibles();
         List<Estancia> Lista_Estancias = Respuesta.getLista_Estancias_Disponibles();
 
-        if( !Elegir_Viaje && !Elegir_Estancia){
-            return;
-        }
-        if( Elegir_Viaje && Elegir_Estancia){
+        if( Elegir_Viaje && Elegir_Estancia ){
             Viaje Viaje_Elegido = Lista_Viajes.get( Numero_Aleatorio.nextInt(Lista_Viajes.size()));
             Num_Viaje = Viaje_Elegido.getID();
             Estancia Estancia_Elegida = Lista_Estancias.get( Numero_Aleatorio.nextInt(Lista_Estancias.size()));
@@ -164,6 +168,8 @@ public class AgenciaViajes implements Runnable{
         Respuesta.setNum_Viaje(Num_Viaje);
         Respuesta.setNum_Estancia(Num_Estancia);
 
+
+        System.out.println("El nombre que contiene el mensaje es: " + Respuesta.getNombre_Cliente());
         System.out.println("Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' envia una peticion de reserva. ");
         EnviarMensaje(Respuesta, Realizacion_Reserva);
 
@@ -184,13 +190,15 @@ public class AgenciaViajes implements Runnable{
             Pago_Total = Pago_Total + Respuesta.getLista_Estancias_Disponibles().get(Respuesta.getNum_Estancia()).getPrecio();
         }
         if( Respuesta.isCancelacion_Viaje() ){
-            Pago_Total = Pago_Total * 1.2;
+            Pago_Total = Pago_Total * PENALIZACION_POR_CANCELACION;
         }
+
         Respuesta.setTipo_Mensaje(TipoMensaje.PAGAR);
         Respuesta.setPago(Pago_Total);
         EnviarMensaje(Respuesta, Realizacion_Pago);
 
     }
+
 
     /**
      * @brief Método para enviar un mensaje al servidor pidiendo la cancelacion de la reserva previamente hecha.
@@ -200,8 +208,8 @@ public class AgenciaViajes implements Runnable{
     public void CancelarReserva(Mensaje MensajeCancelacion) throws JMSException{
 
         MensajeCancelacion.setTipo_Mensaje(TipoMensaje.CANCELACION);
-        EnviarMensaje(MensajeCancelacion,Realizacion_Cancelacion);
         System.out.println("Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' solicita cancelar la reserva. ");
+        EnviarMensaje(MensajeCancelacion,Realizacion_Cancelacion);
 
     }
 
@@ -226,8 +234,11 @@ public class AgenciaViajes implements Runnable{
      * @return El mensaje recibido del servidor decodificado.
      * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
      */
-    private Mensaje RecibirMensaje(List<Destination> Buzon) throws JMSException{
-        MessageConsumer consumer = session.createConsumer(Buzon.get(Id));
+    private Mensaje RecibirMensaje(Destination[] Buzon) throws JMSException,InterruptedException{
+        Sem_Agencia_Viajes[Id].acquire();
+        TimeUnit.SECONDS.sleep(TIEMPO_ESPERA_MENSAJE);
+
+        MessageConsumer consumer = session.createConsumer(Buzon[Id]);
         TextMessage msg = (TextMessage) consumer.receive();
         GsonUtil<Mensaje> gsonUtil = new GsonUtil();
         Mensaje Respuesta_GestionViaje = null;
@@ -248,6 +259,8 @@ public class AgenciaViajes implements Runnable{
             if (connection != null) {
                 connection.close();
             }
-        } catch (JMSException ex){}
+        } catch (JMSException ex){
+
+        }
     }
 }

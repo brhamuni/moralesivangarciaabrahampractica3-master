@@ -9,10 +9,8 @@ import es.ujaen.ssccdd.curso2023_24.Utils.Viaje;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import javax.jms.*;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @class GestionViaje
@@ -30,6 +28,7 @@ public class GestionViaje implements Runnable {
     private final List<Mensaje> Lista_Cancelacion;
     private final Semaphore Sem_Clientes_Particulares[];
     private final Semaphore Sem_Agencias_Viaje[];
+    private int Contador_Agencia;
 
     private ActiveMQConnectionFactory connectionFactory;
     private Connection connection;
@@ -65,16 +64,17 @@ public class GestionViaje implements Runnable {
         this.Lista_Cancelacion = new ArrayList<>();
         this.Sem_Clientes_Particulares = Sem_Clientes_Particulares;
         this.Sem_Agencias_Viaje = Sem_Agencias_Viaje;
+        this.Contador_Agencia = 0;
 
         Preguntar_Disponibilidad = new Destination[NUM_TIPOS_CLIENTES];
         Realizacion_Pago = new Destination[NUM_TIPOS_CLIENTES];
         Realizacion_Cancelacion = new Destination[NUM_TIPOS_CLIENTES];
         Realizacion_Reserva = new Destination[NUM_TIPOS_CLIENTES];
 
-        Respuesta_Disponibilidad =  new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
-        Confirmacion_Pago =  new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
-        Confirmacion_Reserva =  new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
-        Respuesta_Cancelacion =  new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
+        Respuesta_Disponibilidad = new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
+        Confirmacion_Pago = new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
+        Confirmacion_Reserva = new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
+        Respuesta_Cancelacion = new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
 
         int Num_Viajes = Numero_Aleatorio.nextInt(MIN_VIAJES,MAX_VIAJES);
         int Num_Estancias = Numero_Aleatorio.nextInt(MIN_ESTANCIAS,MAX_ESTANCIAS);
@@ -87,13 +87,17 @@ public class GestionViaje implements Runnable {
 
     }
 
-
     @Override
     public void run() {
        System.out.println("GestionViajes Comienza ejecucion");
        try {
            before();
-           execution();
+           while( !Thread.interrupted() ){
+               ComprobarDisponibilidad();
+               ComprobarSolicitudReserva();
+               ComprobarPagoReserva();
+               ComprobarSolicitudCancelacion();
+           }
        } catch (Exception e) {
            System.out.println("GestionViajes interrumpido en su ejecución: " + e.getMessage());
        } finally {
@@ -135,7 +139,6 @@ public class GestionViaje implements Runnable {
             Respuesta_Cancelacion[1][i] = session.createQueue(QUEUE+"Respuesta_Cancelacion.Agencia"+i);
         }
 
-
         MessageConsumer Consumer_Cliente_Disponibilidad = session.createConsumer(Preguntar_Disponibilidad[0]);
         TextMsgListenerGestion Listener_Disponibilidad_Cliente = new TextMsgListenerGestion("Disponibilidad Cliente",Lista_Cliente_Particular);
         Consumer_Cliente_Disponibilidad.setMessageListener(Listener_Disponibilidad_Cliente);
@@ -172,18 +175,6 @@ public class GestionViaje implements Runnable {
         connection.start();
     }
 
-    /**
-     * @brief Método principal donde se gestiona la disponibilidad, reservas, pagos y cancelaciones de los viajes.
-     * @throws Exception Si ocurre algún error durante la ejecución.
-     */
-    public void execution() throws Exception {
-        while(true){
-            ComprobarDisponibilidad();
-            ComprobarSolicitudReserva();
-            ComprobarPagoReserva();
-            ComprobarSolicitudCancelacion();
-        }
-    }
 
     /**
      * @brief Método que comprueba la disponibilidad de viajes y estancias.
@@ -193,15 +184,16 @@ public class GestionViaje implements Runnable {
     private void ComprobarDisponibilidad() throws JMSException, InterruptedException{
 
         Mensaje Pregunta_Cliente;
+        TimeUnit.SECONDS.sleep(1);
 
         if( !Lista_Agencias_Viaje.isEmpty() ){
             if( !Lista_Cliente_Particular.isEmpty()) {
-                long Tiempo_Esperado = ObtenerTiempoEsperando();
-
-                if( Tiempo_Esperado > 3 ){
-                    Pregunta_Cliente = Lista_Cliente_Particular.remove(0);
-                }else{
+                if( Contador_Agencia < 2 ){
+                    ++Contador_Agencia;
                     Pregunta_Cliente = Lista_Agencias_Viaje.remove(0);
+                }else{
+                    Pregunta_Cliente = Lista_Cliente_Particular.remove(0);
+                    Contador_Agencia = 0;
                 }
             }else{
                 Pregunta_Cliente = Lista_Agencias_Viaje.remove(0);
@@ -211,10 +203,10 @@ public class GestionViaje implements Runnable {
             ObtenerEstanciasDisponibles( Pregunta_Cliente );
             if(Pregunta_Cliente.getTipo_Cliente() == TipoCliente.PARTICULAR) {
                 EnviarMensaje(Pregunta_Cliente, Respuesta_Disponibilidad[0][Pregunta_Cliente.getId_Cliente()], Sem_Clientes_Particulares[Pregunta_Cliente.getId_Cliente()] );
-                System.out.println("Le enviamos el mensaje con la disponibilidad que hay de viajes y estancias al cliente con nombre '" + Pregunta_Cliente.getNombre_Cliente() + "' e ID '" + Pregunta_Cliente.getId_Cliente() +"' .");
+                System.out.println("SERVIDOR----->Le enviamos el mensaje con la disponibilidad que hay de viajes y estancias al cliente con nombre '" + Pregunta_Cliente.getNombre_Cliente() + "' e ID '" + Pregunta_Cliente.getId_Cliente() +"' .");
             }else if(Pregunta_Cliente.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 EnviarMensaje(Pregunta_Cliente, Respuesta_Disponibilidad[1][Pregunta_Cliente.getId_Cliente()], Sem_Agencias_Viaje[Pregunta_Cliente.getId_Cliente()] );
-                System.out.println("Le enviamos el mensaje con la disponibilidad que hay de viajes y estancias a la agencia con nombre '" + Pregunta_Cliente.getNombre_Cliente() + "' e ID '" + Pregunta_Cliente.getId_Cliente() +"' .");
+                System.out.println("SERVIDOR----->Le enviamos el mensaje con la disponibilidad que hay de viajes y estancias a la agencia con nombre '" + Pregunta_Cliente.getNombre_Cliente() + "' e ID '" + Pregunta_Cliente.getId_Cliente() +"' .");
             }
 
         }else if( !Lista_Cliente_Particular.isEmpty()){
@@ -222,7 +214,7 @@ public class GestionViaje implements Runnable {
             ObtenerViajesDisponibles( Pregunta_Cliente );
             ObtenerEstanciasDisponibles( Pregunta_Cliente );
             EnviarMensaje( Pregunta_Cliente, Respuesta_Disponibilidad[0][Pregunta_Cliente.getId_Cliente()], Sem_Clientes_Particulares[Pregunta_Cliente.getId_Cliente()]);
-            System.out.println("Le enviamos el mensaje con la disponibilidad que hay de viajes y estancias al cliente con nombre '" + Pregunta_Cliente.getNombre_Cliente() + "' e ID '" + Pregunta_Cliente.getId_Cliente() +"' .");
+            System.out.println("SERVIDOR----->Le enviamos el mensaje con la disponibilidad que hay de viajes y estancias al cliente con nombre '" + Pregunta_Cliente.getNombre_Cliente() + "' e ID '" + Pregunta_Cliente.getId_Cliente() +"' .");
         }
 
     }
@@ -269,11 +261,11 @@ public class GestionViaje implements Runnable {
             }
             if(Peticion_Reserva.getTipo_Cliente() == TipoCliente.PARTICULAR) {
                 EnviarMensaje(Peticion_Reserva, Confirmacion_Reserva[0][Peticion_Reserva.getId_Cliente()], Sem_Clientes_Particulares[Peticion_Reserva.getId_Cliente()] );
-                System.out.println("Le enviamos el mensaje con la confirmacion de la reserva a el cliente con nombre '" + Peticion_Reserva.getNombre_Cliente() + "' e ID '" + Peticion_Reserva.getId_Cliente() +"' .");
+                System.out.println("SERVIDOR----->Le enviamos el mensaje con la confirmacion de la reserva a el cliente con nombre '" + Peticion_Reserva.getNombre_Cliente() + "' e ID '" + Peticion_Reserva.getId_Cliente() +"' .");
 
             }else if(Peticion_Reserva.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 EnviarMensaje(Peticion_Reserva, Confirmacion_Reserva[1][Peticion_Reserva.getId_Cliente()], Sem_Agencias_Viaje[Peticion_Reserva.getId_Cliente()]);
-                System.out.println("Le enviamos el mensaje con la confirmacion de la reserva a la agencia con nombre '" + Peticion_Reserva.getNombre_Cliente() + "' e ID '" + Peticion_Reserva.getId_Cliente() +"' .");
+                System.out.println("SERVIDOR----->Le enviamos el mensaje con la confirmacion de la reserva a la agencia con nombre '" + Peticion_Reserva.getNombre_Cliente() + "' e ID '" + Peticion_Reserva.getId_Cliente() +"' .");
 
             }
         }
@@ -290,10 +282,10 @@ public class GestionViaje implements Runnable {
             Pago_Reserva.setPago_Correcto(true);
             if(Pago_Reserva.getTipo_Cliente() == TipoCliente.PARTICULAR) {
                 EnviarMensaje( Pago_Reserva, Confirmacion_Pago[0][Pago_Reserva.getId_Cliente()],Sem_Clientes_Particulares[Pago_Reserva.getId_Cliente()] );
-                System.out.println( Pago_Reserva.getTipo_Cliente() +" "+ Pago_Reserva.getNombre_Cliente() + " ha realizado el pago de la reserva del viaje correctamente" );
+                System.out.println("SERVIDOR----->"+ Pago_Reserva.getTipo_Cliente() +" "+ Pago_Reserva.getNombre_Cliente() + " ha realizado el pago de la reserva del viaje correctamente" );
             }else if(Pago_Reserva.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 EnviarMensaje( Pago_Reserva, Confirmacion_Pago[1][Pago_Reserva.getId_Cliente()],Sem_Agencias_Viaje[Pago_Reserva.getId_Cliente()] );
-                System.out.println( Pago_Reserva.getTipo_Cliente() +" "+ Pago_Reserva.getNombre_Cliente() + " ha realizado el pago de la reserva del viaje correctamente" );
+                System.out.println( "SERVIDOR----->" + Pago_Reserva.getTipo_Cliente() +" "+ Pago_Reserva.getNombre_Cliente() + " ha realizado el pago de la reserva del viaje correctamente" );
             }
         }
     }
@@ -308,10 +300,10 @@ public class GestionViaje implements Runnable {
             Mensaje Peticion_Cancelacion = Lista_Cancelacion.remove(0);
             if(Peticion_Cancelacion.getTipo_Cliente() == TipoCliente.PARTICULAR) {
                 EnviarMensaje( Peticion_Cancelacion, Respuesta_Cancelacion[0][Peticion_Cancelacion.getId_Cliente()],Sem_Clientes_Particulares[Peticion_Cancelacion.getId_Cliente()] );
-                System.out.println( Peticion_Cancelacion.getTipo_Cliente() +" "+ Peticion_Cancelacion.getNombre_Cliente() + " ha cancelado el viaje correctamente" );
+                System.out.println( "SERVIDOR----->" + Peticion_Cancelacion.getTipo_Cliente() +" "+ Peticion_Cancelacion.getNombre_Cliente() + " ha cancelado el viaje correctamente" );
             }else if(Peticion_Cancelacion.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 EnviarMensaje( Peticion_Cancelacion, Respuesta_Cancelacion[1][Peticion_Cancelacion.getId_Cliente()], Sem_Agencias_Viaje[Peticion_Cancelacion.getId_Cliente()]);
-                System.out.println( Peticion_Cancelacion.getTipo_Cliente() +" "+ Peticion_Cancelacion.getNombre_Cliente() + " ha cancelado el viaje correctamente" );
+                System.out.println( "SERVIDOR----->"+Peticion_Cancelacion.getTipo_Cliente() +" "+ Peticion_Cancelacion.getNombre_Cliente() + " ha cancelado el viaje correctamente" );
             }
         }
     }
@@ -321,9 +313,9 @@ public class GestionViaje implements Runnable {
      * @param Datos_Disponibilidad Objeto Mensaje que contiene los datos de disponibilidad.
      */
     private void ObtenerViajesDisponibles(Mensaje Datos_Disponibilidad) {
-        for (int i = 0; i < Lista_Viajes.size(); ++i) {
-            if (Lista_Viajes.get(i).getPlazasDisponibles() > 0) {
-                Datos_Disponibilidad.getLista_Viajes_Disponibles().add(Lista_Viajes.get(i));
+        for ( Viaje viaje : Lista_Viajes ) {
+            if ( viaje.getPlazasDisponibles() > 0 ) {
+                Datos_Disponibilidad.getLista_Viajes_Disponibles().add( viaje );
             }
         }
     }
@@ -333,9 +325,9 @@ public class GestionViaje implements Runnable {
      * @param Datos_Disponibilidad Objeto Mensaje que contiene los datos de disponibilidad.
      */
     private void ObtenerEstanciasDisponibles(Mensaje Datos_Disponibilidad){
-        for( int i=0; i<Lista_Estancias.size(); ++i ){
-            if( Lista_Estancias.get(i).getPlazas_Disponibles() > 0){
-                Datos_Disponibilidad.getLista_Estancias_Disponibles().add( Lista_Estancias.get(i) );
+        for( Estancia estancia : Lista_Estancias ){
+            if( estancia.getPlazas_Disponibles() > 0){
+                Datos_Disponibilidad.getLista_Estancias_Disponibles().add( estancia );
             }
         }
     }
@@ -346,9 +338,9 @@ public class GestionViaje implements Runnable {
      * @return true si el viaje está disponible, false en caso contrario.
      */
     private boolean ComprobarViajeReserva( Mensaje Peticion_Reserva ){
-        for( int i=0; i<Lista_Viajes.size(); ++i ){
-            if( Lista_Viajes.get(i).getID() == Peticion_Reserva.getNum_Viaje() ){
-                if( Lista_Viajes.get(i).getPlazasDisponibles() > 0 ){
+        for( Viaje viaje : Lista_Viajes ){
+            if( viaje.getID() == Peticion_Reserva.getNum_Viaje() ){
+                if( viaje.getPlazasDisponibles() > 0 ){
                     return true;
                 }
             }
@@ -362,9 +354,9 @@ public class GestionViaje implements Runnable {
      * @return true si la estancia está disponible, false en caso contrario.
      */
     private boolean ComprobarEstanciaReserva(Mensaje Peticion_Reserva){
-        for( int i=0; i<Lista_Estancias.size(); ++i ){
-            if( Lista_Estancias.get(i).getId() == Peticion_Reserva.getNum_Estancia() ){
-                if( Lista_Estancias.get(i).getPlazas_Disponibles() > 0 ){
+        for( Estancia estancia : Lista_Estancias ){
+            if( estancia.getId() == Peticion_Reserva.getNum_Estancia() ){
+                if( estancia.getPlazas_Disponibles() > 0 ){
                     return true;
                 }
             }
@@ -373,22 +365,12 @@ public class GestionViaje implements Runnable {
     }
 
     /**
-     * @brief Método que obtiene el tiempo que un cliente particular lleva esperando.
-     * @return El tiempo en segundos que el cliente lleva esperando.
-     */
-    private long ObtenerTiempoEsperando(){
-        Date actual = new Date();
-        long Tiempo_Esperando = actual.getTime() - Lista_Cliente_Particular.get(0).getFecha().getTime();
-        return Tiempo_Esperando = TimeUnit.SECONDS.convert(Tiempo_Esperando, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * @brief Método que envía un mensaje a un buzón específico y libera el semáforo correspondiente.
-     * @param MensajeCliente Objeto Mensaje que contiene los datos del cliente.
-     * @param Buzon Destino del mensaje.
+     *@brief Método para codificar y enviar un mensaje al cliente correspondiente.
+     * @param MensajeCliente Mensaje que va a ser codificado y posteriormente enviado al cliente.
+     * @param Buzon Buzon por dónde se va a enviar el mensaje.
      * @param Semaforo_Desbloquear Semáforo a liberar después de enviar el mensaje.
-     * @throws JMSException Si ocurre algún error relacionado con JMS.
-     * @throws InterruptedException Si la operación es interrumpida.
+     * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
+     * @throws InterruptedException Si ocurre algún error durante el proceso de envío del mensaje.
      */
     private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon, Semaphore Semaforo_Desbloquear) throws JMSException,InterruptedException{
 
@@ -403,14 +385,15 @@ public class GestionViaje implements Runnable {
     }
 
     /**
-     * @brief Método que cierra la conexión y la sesión JMS.
+     * @brief Método que cierra la conexión con el servidor, liberando todos los recursos asociados.
      */
     public void after() {
         try {
             if (connection != null) {
                 connection.close();
             }
-        } catch (JMSException ex) {}
-    }
+        } catch (JMSException ex) {
 
+        }
+    }
 }

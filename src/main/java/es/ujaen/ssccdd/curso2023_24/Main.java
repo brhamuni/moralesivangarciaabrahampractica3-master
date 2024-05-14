@@ -72,8 +72,8 @@ public class Main {
         System.out.println( "Hilo(Principal) Comienza su ejecución " );
 
         CreacionEjecucionGestionViaje(Ejecucion_Procesos,Lista_Tareas, NUM_CLIENTES );
-        CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
-        //CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
+        //CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
+        CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
 
 
         // Resultados ejecucion.
@@ -81,5 +81,6 @@ public class Main {
 
         // Finalización
         System.out.println( " Hilo(Principal) Ha finalizado " );
+
     }
 }

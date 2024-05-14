@@ -105,7 +105,7 @@ public class ClienteParticular implements Runnable {
             RealizarPagoReserva(Respuesta_Servidor);
             Respuesta_Servidor = RecibirMensaje(Confirmacion_Pago);
 
-            if (Numero_Aleatorio.nextInt(100) < PROBABILIDAD_CANCELACION ) {
+            if (Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
                 CancelarReserva(Respuesta_Servidor);
                 Respuesta_Servidor = RecibirMensaje(Respuesta_Cancelacion);
                 System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' finalmente no se va de vacaciones. ");
@@ -236,7 +236,7 @@ public class ClienteParticular implements Runnable {
      */
     private Mensaje RecibirMensaje(Destination[] Buzon) throws JMSException,InterruptedException{
         Sem_Clientes_Particulares[Id].acquire();
-        TimeUnit.SECONDS.sleep(1);
+        TimeUnit.SECONDS.sleep(TIEMPO_ESPERA_MENSAJE);
 
         MessageConsumer consumer = session.createConsumer(Buzon[Id]);
         TextMessage msg = (TextMessage) consumer.receive();
