@@ -12,10 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-/**
- * @class GestionViaje
- * @brief Clase que implementa la gestión de viajes.
- */
 public class GestionViaje implements Runnable {
 
     private final Integer Num_Clientes;
@@ -34,17 +30,18 @@ public class GestionViaje implements Runnable {
     private Connection connection;
     private Session session;
 
-    private final Destination[] Preguntar_Disponibilidad;
+    private final List<Destination> Preguntar_Disponibilidad;
     private final Destination[][] Respuesta_Disponibilidad;
 
-    private final Destination[] Realizacion_Pago;
+    private final List<Destination> Realizacion_Pago;
     private final Destination[][] Confirmacion_Pago;
 
-    private final Destination[] Realizacion_Cancelacion;
+    private final List<Destination> Realizacion_Cancelacion;
     private final Destination[][] Respuesta_Cancelacion;
 
-    private final Destination[] Realizacion_Reserva;
+    private final List <Destination> Realizacion_Reserva;
     private final Destination[][] Confirmacion_Reserva;
+
 
     /**
      * @brief Constructor parametrizado de la clase GestionViaje.
@@ -66,10 +63,10 @@ public class GestionViaje implements Runnable {
         this.Sem_Agencias_Viaje = Sem_Agencias_Viaje;
         this.Contador_Agencia = 0;
 
-        Preguntar_Disponibilidad = new Destination[NUM_TIPOS_CLIENTES];
-        Realizacion_Pago = new Destination[NUM_TIPOS_CLIENTES];
-        Realizacion_Cancelacion = new Destination[NUM_TIPOS_CLIENTES];
-        Realizacion_Reserva = new Destination[NUM_TIPOS_CLIENTES];
+        Preguntar_Disponibilidad = new ArrayList<>(NUM_TIPOS_CLIENTES);
+        Realizacion_Pago = new ArrayList<>(NUM_TIPOS_CLIENTES);
+        Realizacion_Cancelacion = new ArrayList<>(NUM_TIPOS_CLIENTES);
+        Realizacion_Reserva = new ArrayList<>(NUM_TIPOS_CLIENTES);
 
         Respuesta_Disponibilidad = new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
         Confirmacion_Pago = new Destination[NUM_TIPOS_CLIENTES][Num_Clientes];
@@ -116,17 +113,17 @@ public class GestionViaje implements Runnable {
         connection = connectionFactory.createConnection();
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-        Preguntar_Disponibilidad[0] = session.createQueue(QUEUE+"Preguntar_Disponibilidad.Cliente");
-        Preguntar_Disponibilidad[1] = session.createQueue(QUEUE+"Preguntar_Disponibilidad.Agencia");
+        Preguntar_Disponibilidad.add(0, session.createQueue(QUEUE+"Preguntar_Disponibilidad.Cliente"));
+        Preguntar_Disponibilidad.add(1, session.createQueue(QUEUE+"Preguntar_Disponibilidad.Agencia"));
 
         Realizacion_Reserva[0] = session.createQueue(QUEUE+"Realizacion_Reserva.Cliente");
         Realizacion_Reserva[1] = session.createQueue(QUEUE+"Realizacion_Reserva.Agencia");
 
-        Realizacion_Pago[0] = session.createQueue(QUEUE+"Realizacion_Pago.Cliente");
-        Realizacion_Pago[1] = session.createQueue(QUEUE+"Realizacion_Pago.Agencia");
+        Realizacion_Pago.add(0, session.createQueue(QUEUE+"Realizacion_Pago.Cliente"));
+        Realizacion_Pago.add(1,session.createQueue(QUEUE+"Realizacion_Pago.Agencia"));
 
-        Realizacion_Cancelacion[0] = session.createQueue(QUEUE+"Realizacion_Cancelacion.Cliente");
-        Realizacion_Cancelacion[1] = session.createQueue(QUEUE+"Realizacion_Cancelacion.Agencia");
+        Realizacion_Cancelacion.add(0, session.createQueue(QUEUE+"Realizacion_Cancelacion.Cliente"));
+        Realizacion_Cancelacion.add(1, session.createQueue(QUEUE+"Realizacion_Cancelacion.Agencia"));
 
         for(int i=0;i<Num_Clientes;++i){
             Respuesta_Disponibilidad[0][i] = session.createQueue(QUEUE+"Respuesta_Disponibilidad.Cliente"+i);
@@ -139,7 +136,7 @@ public class GestionViaje implements Runnable {
             Respuesta_Cancelacion[1][i] = session.createQueue(QUEUE+"Respuesta_Cancelacion.Agencia"+i);
         }
 
-        MessageConsumer Consumer_Cliente_Disponibilidad = session.createConsumer(Preguntar_Disponibilidad[0]);
+        MessageConsumer Consumer_Cliente_Disponibilidad = session.createConsumer(Preguntar_Disponibilidad.get(0));
         TextMsgListenerGestion Listener_Disponibilidad_Cliente = new TextMsgListenerGestion("Disponibilidad Cliente",Lista_Cliente_Particular);
         Consumer_Cliente_Disponibilidad.setMessageListener(Listener_Disponibilidad_Cliente);
 
@@ -148,7 +145,7 @@ public class GestionViaje implements Runnable {
         Consumer_Agencia_Disponibilidad.setMessageListener(Listener_Disponibilidad_Agencia);
 
 
-        MessageConsumer Consumer_Cliente_Reserva = session.createConsumer(Realizacion_Reserva[0]);
+        MessageConsumer Consumer_Cliente_Reserva = session.createConsumer(Realizacion_Reserva.get(0));
         TextMsgListenerGestion Listener_Cliente_Reserva = new TextMsgListenerGestion("Reserva",Lista_Reservas);
         Consumer_Cliente_Reserva.setMessageListener(Listener_Cliente_Reserva);
 
@@ -156,7 +153,7 @@ public class GestionViaje implements Runnable {
         TextMsgListenerGestion Listener_Agencia_Reserva = new TextMsgListenerGestion("Reserva",Lista_Reservas);
         Consumer_Agencia_Reserva.setMessageListener(Listener_Agencia_Reserva);
 
-        MessageConsumer Consumer_Cliente_Pago = session.createConsumer(Realizacion_Pago[0]);
+        MessageConsumer Consumer_Cliente_Pago = session.createConsumer(Realizacion_Pago.get(0));
         TextMsgListenerGestion Listener_Cliente_Pago = new TextMsgListenerGestion("Pago",Lista_Pago);
         Consumer_Cliente_Pago.setMessageListener(Listener_Cliente_Pago);
 
@@ -164,7 +161,7 @@ public class GestionViaje implements Runnable {
         TextMsgListenerGestion Listener_Agencia_Pago = new TextMsgListenerGestion("Pago",Lista_Pago);
         Consumer_Agencia_Pago.setMessageListener(Listener_Agencia_Pago);
 
-        MessageConsumer Consumer_Cliente_Cancelacion = session.createConsumer(Realizacion_Cancelacion[0]);
+        MessageConsumer Consumer_Cliente_Cancelacion = session.createConsumer(Realizacion_Cancelacion.get(0));
         TextMsgListenerGestion Listener_Cliente_Cancelacion = new TextMsgListenerGestion("Cancelacion",Lista_Cancelacion);
         Consumer_Cliente_Cancelacion.setMessageListener(Listener_Cliente_Cancelacion);
 

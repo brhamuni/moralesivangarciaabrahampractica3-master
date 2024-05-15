@@ -60,33 +60,26 @@ public class Mensaje {
      */
     @Override
     public String toString() {
-        if( Tipo_Mensaje == TipoMensaje.CLIENTE ){
-            return DatosCliente();
-        }else if( Tipo_Mensaje == TipoMensaje.RESERVA ){
+
+       if( Tipo_Mensaje == TipoMensaje.RESERVA ){
             return DatosReserva();
-        }else if( Tipo_Mensaje == TipoMensaje.DISPONIBLE ){
+       }else if( Tipo_Mensaje == TipoMensaje.DISPONIBLE ){
             return DatosDisponibilidad();
-        }else if( Tipo_Mensaje == TipoMensaje.CANCELACION ){
+       }else if( Tipo_Mensaje == TipoMensaje.CANCELACION ){
             return Cancelacion();
-        }else if ( Tipo_Mensaje == TipoMensaje.PAGAR ){
+       }else if ( Tipo_Mensaje == TipoMensaje.PAGAR ){
             return Pagar();
-        }
+       }
         return "";
     }
 
-    //region ToString's
-
-    private String DatosCliente() {
-        return "Mensaje con los datos del cliente {" +
-                "Nombre=" + Nombre_Cliente + ", ID=" + Id_Cliente +
-                ", Num_Viaje=" + Num_Viaje + ", Num_Estancia=" + Num_Estancia + ", Pago=" + Pago + '}';
-    }
 
     private String DatosReserva() {
-        return "Mensaje con los datos de la reserva {"+
-                "Nombre=" + Nombre_Cliente + ", ID" + Id_Cliente +
-                ", Num_Viaje=" + Num_Viaje +
-                ", Num_Estancia=" + Num_Estancia + ", Cancelacion_Vaje=" + Cancelacion_Viaje + '}';
+            return "Mensaje con los datos de la reserva {" +
+                    "Nombre=" + Nombre_Cliente + ", ID" + Id_Cliente +
+                    ", Num_Viaje=" + Num_Viaje +
+                    ", Num_Estancia=" + Num_Estancia + ", Cancelacion_Vaje=" + Cancelacion_Viaje + '}';
+
     }
 
     private String DatosDisponibilidad() {

@@ -15,27 +15,27 @@ import java.util.logging.*;
 public class ClienteParticular implements Runnable {
     private final int Id;
     private final String Nombre;
-    private final Semaphore Sem_Clientes_Particulares[];
+    private final List<Semaphore> Sem_Clientes_Particulares;
 
     private ActiveMQConnectionFactory connectionFactory;
     private Connection connection;
     private Session session;
 
     private Destination Realizacion_Pago;
-    private Destination[] Confirmacion_Pago;
+    private List<Destination> Confirmacion_Pago;
     private Destination Realizacion_Cancelacion;
-    private Destination[] Respuesta_Cancelacion;
+    private List<Destination> Respuesta_Cancelacion;
     private Destination Realizacion_Reserva;
-    private Destination[] Confirmacion_Reserva;
+    private List<Destination> Confirmacion_Reserva;
     private Destination Preguntar_Disponibilidad;
-    private Destination[] Respuesta_Disponibilidad;
+    private List<Destination> Respuesta_Disponibilidad;
 
     /**
      * @brief Constructor parametrizado de la clase ClienteParticular.
      * @param Id Número de identificación unico del cliente.
      * @param Num_Clientes Número de clientes asociados a la clase cliente particular.
      */
-    public ClienteParticular(int Id, int Num_Clientes, Semaphore Sem_Clientes_Particulares[]) {
+    public ClienteParticular(int Id, int Num_Clientes, List<Semaphore> Sem_Clientes_Particulares) {
         this.Id = Id;
         this.Nombre = "" + NombreUsuarios.getNombre();
         this.Sem_Clientes_Particulares = Sem_Clientes_Particulares;
@@ -45,10 +45,10 @@ public class ClienteParticular implements Runnable {
         Realizacion_Reserva = null;
         Preguntar_Disponibilidad = null;
 
-        Confirmacion_Pago = new Destination[Num_Clientes];
-        Respuesta_Cancelacion = new Destination[Num_Clientes];
-        Confirmacion_Reserva = new Destination[Num_Clientes];
-        Respuesta_Disponibilidad = new Destination[Num_Clientes];
+        Confirmacion_Pago = new ArrayList<>(Num_Clientes);
+        Respuesta_Cancelacion = new ArrayList<>(Num_Clientes);
+        Confirmacion_Reserva = new ArrayList<>(Num_Clientes);
+        Respuesta_Disponibilidad = new ArrayList<>(Num_Clientes);
     }
 
 
@@ -81,10 +81,10 @@ public class ClienteParticular implements Runnable {
         Realizacion_Pago = session.createQueue(QUEUE+"Realizacion_Pago.Cliente");
         Realizacion_Cancelacion = session.createQueue(QUEUE+"Realizacion_Cancelacion.Cliente");
 
-        Respuesta_Disponibilidad[Id] = session.createQueue(QUEUE+"Respuesta_Disponibilidad.Cliente"+Id);
-        Confirmacion_Reserva[Id] = session.createQueue(QUEUE+"Confirmacion_Reserva.Cliente"+Id);
-        Confirmacion_Pago[Id] = session.createQueue(QUEUE+"Confirmacion_Pago.Cliente"+Id);
-        Respuesta_Cancelacion[Id] = session.createQueue(QUEUE+"Respuesta_Cancelacion.Cliente"+Id);
+        Respuesta_Disponibilidad.add(Id, session.createQueue(QUEUE+"Respuesta_Disponibilidad.Cliente"+Id));
+        Confirmacion_Reserva.add(Id, session.createQueue(QUEUE+"Confirmacion_Reserva.Cliente"+Id));
+        Confirmacion_Pago.add(Id, session.createQueue(QUEUE+"Confirmacion_Pago.Cliente"+Id));
+        Respuesta_Cancelacion.add(Id, session.createQueue(QUEUE+"Respuesta_Cancelacion.Cliente"+Id));
 
         connection.start();
     }
@@ -105,7 +105,7 @@ public class ClienteParticular implements Runnable {
             RealizarPagoReserva(Respuesta_Servidor);
             Respuesta_Servidor = RecibirMensaje(Confirmacion_Pago);
 
-            if (Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
+            if (Respuesta_Servidor.isPago_Correcto() && Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
                 CancelarReserva(Respuesta_Servidor);
                 Respuesta_Servidor = RecibirMensaje(Respuesta_Cancelacion);
                 System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' finalmente no se va de vacaciones. ");
@@ -208,8 +208,8 @@ public class ClienteParticular implements Runnable {
     public void CancelarReserva(Mensaje MensajeCancelacion) throws JMSException{
 
         MensajeCancelacion.setTipo_Mensaje(TipoMensaje.CANCELACION);
-        System.out.println("Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' solicita cancelar la reserva. ");
         EnviarMensaje(MensajeCancelacion,Realizacion_Cancelacion);
+        System.out.println("Cliente----> Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje solicitando la cancelacion de la reserva que habia realizado. ");
 
     }
 
@@ -219,36 +219,37 @@ public class ClienteParticular implements Runnable {
      * @param Buzon Buzon por dónde se va a enviar el mensaje.
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
-    private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon) throws JMSException{
-        GsonUtil<Mensaje> gsonUtil = new GsonUtil();
-        MessageProducer producer = session.createProducer(Buzon);
-        TextMessage mensaje = session.createTextMessage(gsonUtil.encode(MensajeCliente,Mensaje.class));
+    private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon ) throws JMSException{
+        GsonUtil<Mensaje> GsonUtil = new GsonUtil();
+        MessageProducer Producer_Particular = session.createProducer( Buzon );
+        TextMessage Mensaje_Codificado = session.createTextMessage( GsonUtil.encode(MensajeCliente,Mensaje.class) );
 
-        producer.send(mensaje);
-        producer.close();
+        Producer_Particular.send( Mensaje_Codificado );
+        Producer_Particular.close();
     }
 
     /**
      * @brief Metodo que recibe un mensaje del servidor y lo decodifica.
      * @param Buzon Buzon por donde se va a recibir el mensaje.
-     * @return El mensaje recibido del servidor decodificado.
+     * @return El mensaje que ha sido recibido del servidor decodificado.
      * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
      */
-    private Mensaje RecibirMensaje(Destination[] Buzon) throws JMSException,InterruptedException{
-        Sem_Clientes_Particulares[Id].acquire();
+    private Mensaje RecibirMensaje( List<Destination> Buzon ) throws JMSException,InterruptedException{
+        Sem_Clientes_Particulares.get(Id).acquire();
         TimeUnit.SECONDS.sleep(TIEMPO_ESPERA_MENSAJE);
 
-        MessageConsumer consumer = session.createConsumer(Buzon[Id]);
-        TextMessage msg = (TextMessage) consumer.receive();
         GsonUtil<Mensaje> gsonUtil = new GsonUtil();
-        Mensaje Respuesta_GestionViaje = null;
+        MessageConsumer Consumer_Particular = session.createConsumer( Buzon.get(Id) );
+        TextMessage Mensaje_Codificado = (TextMessage) Consumer_Particular.receive();
+        Mensaje Respuesta_Servidor = null;
+        
         try {
-            Respuesta_GestionViaje = gsonUtil.decode(msg.getText(), Mensaje.class);
+            Respuesta_Servidor = gsonUtil.decode( Mensaje_Codificado.getText(), Mensaje.class );
         } catch (JMSException ex) {
-            Logger.getLogger(ClienteParticular.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger( ClienteParticular.class.getName()).log(Level.SEVERE, null, ex );
         }
-        consumer.close();
-        return Respuesta_GestionViaje;
+        Consumer_Particular.close();
+        return Respuesta_Servidor;
     }
 
     /**
@@ -259,6 +260,8 @@ public class ClienteParticular implements Runnable {
             if (connection != null) {
                 connection.close();
             }
-        } catch (JMSException ex){}
+        } catch (JMSException ex){
+            
+        }
     }
 }

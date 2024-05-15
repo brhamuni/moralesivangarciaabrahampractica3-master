@@ -11,6 +11,11 @@ public class TextMsgListenerGestion implements MessageListener {
     private String Consumer_Name;
     private List<Mensaje> Lista;
 
+    /**
+     * @brief Constructor parametrizado de la clase TextMsgListenerGestion.
+     * @param Consumer_Name Nombre para comprobar el tipo de mensaje que se ha recibido.
+     * @param Lista_Mensaje_Clientes Lista dónde se almacenaran los mensajes recibidos de los clientes.
+     */
     public TextMsgListenerGestion(String Consumer_Name, List<Mensaje> Lista_Mensaje_Clientes) {
         this.Consumer_Name = Consumer_Name;
         this.Lista = Lista_Mensaje_Clientes;

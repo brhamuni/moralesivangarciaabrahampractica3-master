@@ -1,5 +1,6 @@
 package es.ujaen.ssccdd.curso2023_24;
 
+import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 import es.ujaen.ssccdd.curso2023_24.Procesos.AgenciaViajes;
 import es.ujaen.ssccdd.curso2023_24.Procesos.ClienteParticular;
 import es.ujaen.ssccdd.curso2023_24.Procesos.GestionViaje;
@@ -8,21 +9,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 
 public class Main {
 
     private static final int NUM_CLIENTES = Numero_Aleatorio.nextInt( MIN_CLIENTES, MAX_CLIENTES );
+    private static List<Semaphore> Sem_Clientes_Particulares = new ArrayList<>(NUM_CLIENTES);
+    private static List<Semaphore> Sem_Agencias_Viajes = new ArrayList<>(NUM_CLIENTES);
 
-    private static Semaphore Sem_Clientes_Particulares[] = new Semaphore[NUM_CLIENTES];
-    private static Semaphore Sem_Agencias_Viajes[] = new Semaphore[NUM_CLIENTES];
-
-    private static void InicializacionSemaforos( Semaphore Sem_Clientes_Particulares[], Semaphore Sem_Agencias_Viajes[], int Num_Usuarios ) {
+    private static void InicializacionSemaforos( List<Semaphore> Sem_Clientes_Particulares, List<Semaphore> Sem_Agencias_Viajes, int Num_Usuarios ) {
         for ( int i = 0; i < Num_Usuarios; ++i ) {
-            Sem_Clientes_Particulares[i] = new Semaphore(0 );
-            Sem_Agencias_Viajes[i] = new Semaphore(0 );
+            Sem_Clientes_Particulares.add(i, new Semaphore(0 ));
+            Sem_Agencias_Viajes.add(i, new Semaphore(0 ));
         }
     }
+
     private static void CreacionEjecucionGestionViaje(ExecutorService Ejecucion_Procesos, List<Future<?>> Lista_Tareas, int Num_Clientes){
         GestionViaje Nueva_Gestion = new GestionViaje(Num_Clientes,Sem_Clientes_Particulares,Sem_Agencias_Viajes);
         Future<?> Tarea_Gestion = Ejecucion_Procesos.submit( Nueva_Gestion );
@@ -70,17 +70,14 @@ public class Main {
 
         // Cuerpo de ejecución
         System.out.println( "Hilo(Principal) Comienza su ejecución " );
-
         CreacionEjecucionGestionViaje(Ejecucion_Procesos,Lista_Tareas, NUM_CLIENTES );
-        //CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
+        CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
         CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
-
 
         // Resultados ejecucion.
         EsperaFinalizacionPrograma( Ejecucion_Procesos, Ejecucion, Fin_Ejecucion, Lista_Tareas );
 
         // Finalización
         System.out.println( " Hilo(Principal) Ha finalizado " );
-
     }
 }

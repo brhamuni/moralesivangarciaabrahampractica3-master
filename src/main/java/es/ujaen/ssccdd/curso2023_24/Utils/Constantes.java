@@ -37,7 +37,7 @@ public interface Constantes {
     }
 
     enum TipoCliente{
-        PARTICULAR, AGENCIA
+        PARTICULAR, AGENCIA, SERVIDOR
     }
 
     NombreAgencias[] Estados_Disponibles_Agencias = NombreAgencias.values();
@@ -59,7 +59,7 @@ public interface Constantes {
     double MAX_PRECIO_ESTANCIA = 900.0;
     double MIN_PRECIO_VIAJE = 500.0;
     double MAX_PRECIO_VIAJE = 3000.0;
-    int PROBABILIDAD_CANCELACION = 50;
+    int PROBABILIDAD_CANCELACION = 20;
     int PROBABILIDAD_VIAJE = 85;
     int PROBABILIDAD_ESTANCIA = 85;
     double PENALIZACION_POR_CANCELACION = 1.2;
