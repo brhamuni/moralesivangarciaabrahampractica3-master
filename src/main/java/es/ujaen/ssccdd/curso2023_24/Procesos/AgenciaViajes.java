@@ -30,7 +30,7 @@ public class AgenciaViajes implements Runnable {
      * Constructor parametrizado de la clase AgenciaViajes.
      * @param Id Número de identificación unico del cliente.
      */
-    public AgenciaViajes(int Id, List<Semaphore> Sem_Agencia_Viajes) {
+    public AgenciaViajes( int Id, List<Semaphore> Sem_Agencia_Viajes ) {
         this.Id = Id;
         this.Nombre = "" + NombreAgencias.getNombre();
         this.Sem_Agencia_Viajes = Sem_Agencia_Viajes;
@@ -48,15 +48,15 @@ public class AgenciaViajes implements Runnable {
 
     @Override
     public void run() {
-        System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' comienza su EJECUCIÓN " );
+        System.out.println( "Agencia con nombre '" + Nombre + "' e ID '" + Id + "' comienza su EJECUCIÓN " );
         try {
             before();
             execution();
         }catch(Exception e){
-            System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' ha sido INTERRUMPIDO " );
+            System.out.println( "Agencia con nombre '" + Nombre + "' e ID '" + Id + "' ha sido INTERRUMPIDO " );
         }finally {
             after();
-            System.out.println( "Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' finaliza su EJECUCIÓN ");
+            System.out.println( "Agencia con nombre '" + Nombre + "' e ID '" + Id + "' finaliza su EJECUCIÓN ");
         }
     }
 
@@ -65,7 +65,6 @@ public class AgenciaViajes implements Runnable {
      * @throws Exception  Si ocurre algún error durante la configuración de las conexiones y sesiones.
      */
     public void before() throws Exception{
-
         ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(BROKER_URL);
         connection = connectionFactory.createConnection();
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -90,7 +89,7 @@ public class AgenciaViajes implements Runnable {
         Respuesta_Servidor = RecibirMensaje( Confirmacion_Reserva );
 
         if( !Respuesta_Servidor.isReserva_Correcta() ){
-            System.out.println( ANSI_RED + "No habia plazas suficientes y por tanto la peticion de reserva no se ha podido realizar correctamente." + ANSI_RESET );
+            System.out.println( TEXTO_ROJO + "No habia plazas suficientes y por tanto la peticion de reserva no se ha podido realizar correctamente." + RESET_COLOR);
         }else {
             RealizarPagoReserva( Respuesta_Servidor );
             Respuesta_Servidor = RecibirMensaje(Confirmacion_Pago);
@@ -98,9 +97,9 @@ public class AgenciaViajes implements Runnable {
             if ( Respuesta_Servidor.isPago_Correcto() && Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
                 CancelarReserva( Respuesta_Servidor );
                 RecibirMensaje( Respuesta_Cancelacion );
-                System.out.println( ANSI_RED + "AG--> Agencia con Nombre: '" + Nombre + "' e Id: '" + Id + "' finalmente ha cancelado la reserva y no se va de vacaciones. " + ANSI_RESET );
+                System.out.println( TEXTO_ROJO + "AG--> Agencia con Nombre: '" + Nombre + "' e Id: '" + Id + "' finalmente ha cancelado la reserva y no se va de vacaciones. " + RESET_COLOR);
             }else{
-                System.out.println( ANSI_GREEN + "AG--> Agencia con Nombre: '" + Nombre + "' e Id: '" + Id + "' se va de vacaciones. " + ANSI_RESET );
+                System.out.println( TEXTO_VERDE + "AG--> Agencia con Nombre: '" + Nombre + "' e Id: '" + Id + "' se va de vacaciones. " + RESET_COLOR);
             }
         }
     }
@@ -111,7 +110,7 @@ public class AgenciaViajes implements Runnable {
      */
     public void ComprobarDisponibilidad() throws JMSException{
         Mensaje Datos_Agencia = new Mensaje( TipoMensaje.DISPONIBILIDAD, Nombre, Id );
-        System.out.println( ANSI_YELLOW + "AG--> Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' le ha enviado un mensaje solicitando las disponibilidades que hay actualmente. " + ANSI_RESET );
+        System.out.println( TEXTO_AMARILLO + "AG--> Agencia con Nombre: '" + Nombre + "' e Id: '" + Id + "' envia un mensaje solicitando las disponibilidades. " + RESET_COLOR);
         EnviarMensaje( Datos_Agencia,Preguntar_Disponibilidad );
     }
 
@@ -123,32 +122,27 @@ public class AgenciaViajes implements Runnable {
     public void RealizarReserva( Mensaje Respuesta ) throws JMSException{
         int Num_Viaje = -1, Num_Estancia = -1;
         boolean Elegir_Estancia = Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_ESTANCIA;
-        boolean Elegir_Viaje = Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_VIAJE;
         boolean Cancelacion = Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_CANCELACION;
 
         List<Viaje> Lista_Viajes = Respuesta.getLista_Viajes_Disponibles();
         List<Estancia> Lista_Estancias = Respuesta.getLista_Estancias_Disponibles();
 
-        if( Elegir_Viaje && Elegir_Estancia ){
+        if( Elegir_Estancia ){
             Viaje Viaje_Elegido = Lista_Viajes.get( Numero_Aleatorio.nextInt(Lista_Viajes.size()));
             Num_Viaje = Viaje_Elegido.getID();
             Estancia Estancia_Elegida = Lista_Estancias.get( Numero_Aleatorio.nextInt(Lista_Estancias.size()));
             Num_Estancia = Estancia_Elegida.getId();
-        }
-        if(Elegir_Viaje && !Elegir_Estancia){
+        }else{
             Viaje Viaje_Elegido = Lista_Viajes.get( Numero_Aleatorio.nextInt(Lista_Viajes.size()));
             Num_Viaje = Viaje_Elegido.getID();
         }
-        if(!Elegir_Viaje && Elegir_Estancia){
-            Estancia Estancia_Elegida = Lista_Estancias.get( Numero_Aleatorio.nextInt(Lista_Estancias.size()));
-            Num_Estancia = Estancia_Elegida.getId();
-        }
+
         Respuesta.setTipo_Mensaje( TipoMensaje.RESERVA );
         Respuesta.setCancelacion_Viaje( Cancelacion );
         Respuesta.setNum_Viaje( Num_Viaje );
         Respuesta.setNum_Estancia( Num_Estancia );
 
-        System.out.println( ANSI_YELLOW + "AG--> Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' envia una peticion de reserva. " + ANSI_RESET );
+        System.out.println( TEXTO_AMARILLO + "AG--> Agencia con nombre '" + Nombre + "' e ID '" + Id + "' envia una peticion de reserva. " + RESET_COLOR);
         EnviarMensaje( Respuesta, Realizacion_Reserva );
     }
 
@@ -161,10 +155,10 @@ public class AgenciaViajes implements Runnable {
         double Pago_Total_Agencia = Respuesta.getNum_Viaje() != -1 ? Respuesta.getLista_Viajes_Disponibles().get(Respuesta.getNum_Viaje()).getPrecio() : 0;
         Pago_Total_Agencia = Respuesta.getNum_Estancia() != -1 ? Pago_Total_Agencia + Respuesta.getLista_Estancias_Disponibles().get(Respuesta.getNum_Estancia()).getPrecio() : Pago_Total_Agencia + 0;
         Pago_Total_Agencia = Respuesta.isCancelacion_Viaje() ? Pago_Total_Agencia * PENALIZACION_POR_CANCELACION : Pago_Total_Agencia;
+
         Respuesta.setPago( Pago_Total_Agencia );
         Respuesta.setTipo_Mensaje( TipoMensaje.PAGAR );
-
-        System.out.println( ANSI_YELLOW + "AG--> Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje indicando que ha realizado el pago de la reserva. " + ANSI_RESET );
+        System.out.println( TEXTO_AMARILLO + "AG--> Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje indicando que ha realizado el pago de la reserva. " + RESET_COLOR );
         EnviarMensaje( Respuesta, Realizacion_Pago );
     }
 
@@ -175,10 +169,9 @@ public class AgenciaViajes implements Runnable {
      */
     public void CancelarReserva( Mensaje MensajeCancelacion ) throws JMSException{
         MensajeCancelacion.setTipo_Mensaje( TipoMensaje.CANCELACION );
-        System.out.println( ANSI_YELLOW + "AG--> Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje solicitando la cancelacion de la reserva que habia realizado. " + ANSI_RESET );
+        System.out.println( TEXTO_AMARILLO + "AG--> Agencia con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje solicitando la cancelacion de la reserva que habia realizado. " + RESET_COLOR);
         EnviarMensaje( MensajeCancelacion, Realizacion_Cancelacion );
     }
-
 
     /**
      * Método para codificar y enviar un mensaje al servidor de GestionViajes.
@@ -191,7 +184,7 @@ public class AgenciaViajes implements Runnable {
 
         GsonUtil<Mensaje> GsonUtil = new GsonUtil<>();
         MessageProducer Producer_Agencia = session.createProducer( Buzon );
-        Producer_Agencia.send( session.createTextMessage( GsonUtil.encode(MensajeCliente, Mensaje.class) ) );
+        Producer_Agencia.send( session.createTextMessage( GsonUtil.encode(MensajeCliente, Mensaje.class)) );
         Producer_Agencia.close();
     }
 
@@ -201,16 +194,16 @@ public class AgenciaViajes implements Runnable {
      * @return El mensaje que ha sido recibido del servidor decodificado.
      * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
      */
-    private Mensaje RecibirMensaje( Destination Buzon ) throws JMSException,InterruptedException{
+    private Mensaje RecibirMensaje( Destination Buzon ) throws JMSException, InterruptedException {
         Sem_Agencia_Viajes.get(Id).acquire();
 
         GsonUtil<Mensaje> gsonUtil = new GsonUtil<>();
         MessageConsumer Consumer_Agencia = session.createConsumer( Buzon );
         TextMessage Mensaje_Codificado = (TextMessage) Consumer_Agencia.receive();
         Mensaje Respuesta_Servidor = gsonUtil.decode( Mensaje_Codificado.getText(), Mensaje.class );
-
         Consumer_Agencia.close();
-        System.out.println( ANSI_PURPLE + "AGENCIA VIAJE----> Se ha recibido un mensaje: " + Respuesta_Servidor.toString() + ". " + ANSI_RESET );
+
+        System.out.println( TEXTO_MORADO + "AGENCIA VIAJE----> Se ha recibido un mensaje: " + Respuesta_Servidor.toString() + ". " + RESET_COLOR );
         return Respuesta_Servidor;
     }
 

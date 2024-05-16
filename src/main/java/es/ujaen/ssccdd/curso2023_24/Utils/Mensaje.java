@@ -75,7 +75,7 @@ public class Mensaje {
         if(Tipo_Cliente == TipoCliente.SERVIDOR){
             return "Estimado " + Nombre_Cliente + " " + Id_Cliente +" le comunicamos que la reserva se ha realizado correctamente. Realize el pago de la reserva en un maximo de 5 dias";
         }else{
-            return "Datos de la peticion de reserva del cliente [" + "Nombre: " + Nombre_Cliente + ", Id: '" + Id_Cliente + "', Viaje: '" + Num_Viaje + "', Id_Estancia: '" + Num_Estancia + "', Cancelacion_Vaje: " + Cancelacion_Viaje + ']';
+            return "Datos de la peticion de reserva del cliente [" + "Nombre: " + Nombre_Cliente + ", Id: '" + Id_Cliente + "', Viaje: '" + Num_Viaje + "', Estancia: '" + Num_Estancia + "', Cancelacion_Vaje: " + Cancelacion_Viaje + ']';
         }
     }
 
@@ -91,13 +91,13 @@ public class Mensaje {
         if(Tipo_Cliente == TipoCliente.SERVIDOR){
             return "La cancelacion de la reserva con Nombre " + Nombre_Cliente + " e Id '" + Id_Cliente + "' se ha realizado correctamente. Recibira el dinero de la reserva en un plazo de 5 dias";
         }else{
-            return "Datos del cliente que solicita la cancelacion de la reserva [" + "Nombre: " + Nombre_Cliente + ", Id: '" + Id_Cliente + "', Num_Viaje: " + Num_Viaje + ", Num_Estancia: " + Num_Estancia + ", Cancelacion_Vaje: " + Cancelacion_Viaje + "Cantidada Pagada: " + Cantidad_Pagar + ']';
+            return "Datos del cliente que solicita la cancelacion de la reserva [" + "Nombre: " + Nombre_Cliente + ", Id: '" + Id_Cliente + "', Num_Viaje: " + Num_Viaje + ", Num_Estancia: " + Num_Estancia + ", Cancelacion_Vaje: " + Cancelacion_Viaje + ", Cantidad Pagada: " + Cantidad_Pagar + ']';
         }
     }
 
     private String Pagar() {
         if(Tipo_Cliente == TipoCliente.SERVIDOR){
-            return "!!ENHORABUENA!! El pago de la reserva del cliente con Nombre " + Nombre_Cliente + " e Id= '" + Id_Cliente + "' se ha realizado correctamente";
+            return "!!ENHORABUENA!! El pago de la reserva del cliente con Nombre " + Nombre_Cliente + " e Id: '" + Id_Cliente + "' se ha realizado correctamente";
         }else{
             return "Datos del cliente que ha realizado el pago de la reserva [ Nombre: " + Nombre_Cliente + ", Id: '" + Id_Cliente + "', Num_Viaje: " + Num_Viaje + ", Num_Estancia: " + Num_Estancia + ", Cancelacion_Vaje: " + Cancelacion_Viaje + "Cantidad a Pagar: " + Cantidad_Pagar + ']';
         }

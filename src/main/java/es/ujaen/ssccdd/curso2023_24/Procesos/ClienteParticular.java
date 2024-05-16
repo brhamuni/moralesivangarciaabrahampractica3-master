@@ -8,7 +8,6 @@ import org.apache.activemq.ActiveMQConnectionFactory;
 import javax.jms.*;
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.logging.*;
 
 public class ClienteParticular implements Runnable {
     private final int Id;
@@ -49,15 +48,15 @@ public class ClienteParticular implements Runnable {
 
     @Override
     public void run() {
-        System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' comienza su EJECUCIÓN ");
+        System.out.println( "Cliente con nombre '" + Nombre + "' e ID '" + Id + "' comienza su EJECUCIÓN ");
         try {
             before();
             execution();
         }catch(Exception e){
-            System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' ha sido INTERRUMPIDO " );
+            System.out.println( "Cliente con nombre '" + Nombre + "' e ID '" + Id + "' ha sido INTERRUMPIDO " );
         }finally {
             after();
-            System.out.println( "Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' finaliza su EJECUCIÓN ");
+            System.out.println( "Cliente con nombre '" + Nombre + "' e ID '" + Id + "' finaliza su EJECUCIÓN ");
         }
     }
 
@@ -74,34 +73,33 @@ public class ClienteParticular implements Runnable {
         Realizacion_Reserva = session.createQueue(QUEUE + "Realizacion_Reserva.Cliente" );
         Realizacion_Pago = session.createQueue(QUEUE + "Realizacion_Pago.Cliente" );
         Realizacion_Cancelacion = session.createQueue(QUEUE + "Realizacion_Cancelacion.Cliente" );
-        Respuesta_Disponibilidad = session.createQueue(QUEUE + "Respuesta_Disponibilidad.Cliente"+Id );
-        Confirmacion_Reserva = session.createQueue(QUEUE + "Confirmacion_Reserva.Cliente"+Id );
-        Confirmacion_Pago =  session.createQueue(QUEUE + "Confirmacion_Pago.Cliente"+Id );
-        Respuesta_Cancelacion = session.createQueue(QUEUE + "Respuesta_Cancelacion.Cliente"+Id );
+        Respuesta_Disponibilidad = session.createQueue(QUEUE + "Respuesta_Disponibilidad.Cliente" + Id );
+        Confirmacion_Reserva = session.createQueue(QUEUE + "Confirmacion_Reserva.Cliente" + Id );
+        Confirmacion_Pago =  session.createQueue(QUEUE + "Confirmacion_Pago.Cliente" + Id );
+        Respuesta_Cancelacion = session.createQueue(QUEUE + "Respuesta_Cancelacion.Cliente" + Id );
 
         connection.start();
     }
 
     public void execution() throws Exception {
-
         ComprobarDisponibilidad();
-        Mensaje Respuesta_Servidor = RecibirMensaje(Respuesta_Disponibilidad);
+        Mensaje Respuesta_Servidor = RecibirMensaje( Respuesta_Disponibilidad );
 
-        RealizarReserva(Respuesta_Servidor);
-        Respuesta_Servidor = RecibirMensaje(Confirmacion_Reserva);
+        RealizarReserva( Respuesta_Servidor );
+        Respuesta_Servidor = RecibirMensaje( Confirmacion_Reserva );
 
         if( !Respuesta_Servidor.isReserva_Correcta() ){
-            System.out.println( ANSI_RED + "No habia plazas suficientes y por tanto la peticion de reserva no se ha podido realizar correctamente." + ANSI_RESET );
+            System.out.println( TEXTO_ROJO + "No habia plazas suficientes y por tanto la peticion de reserva no se ha podido realizar correctamente." + RESET_COLOR );
         }else {
-            RealizarPagoReserva(Respuesta_Servidor);
-            Respuesta_Servidor = RecibirMensaje(Confirmacion_Pago);
+            RealizarPagoReserva( Respuesta_Servidor );
+            Respuesta_Servidor = RecibirMensaje( Confirmacion_Pago );
 
             if (Respuesta_Servidor.isPago_Correcto() && Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
-                CancelarReserva(Respuesta_Servidor);
-                RecibirMensaje(Respuesta_Cancelacion);
-                System.out.println( ANSI_RED + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' finalmente ha cancelado la reserva y no se va de vacaciones. " + ANSI_RESET );
+                CancelarReserva( Respuesta_Servidor );
+                RecibirMensaje( Respuesta_Cancelacion );
+                System.out.println( TEXTO_ROJO + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' finalmente ha cancelado la reserva y no se va de vacaciones. " + RESET_COLOR );
             }else{
-                System.out.println( ANSI_GREEN + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' se va de vacaciones. " + ANSI_RESET );
+                System.out.println( TEXTO_VERDE + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' se va de vacaciones. " + RESET_COLOR );
             }
         }
     }
@@ -111,9 +109,9 @@ public class ClienteParticular implements Runnable {
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
     public void ComprobarDisponibilidad() throws JMSException{
-        Mensaje Datos_Cliente = new Mensaje(TipoMensaje.DISPONIBILIDAD, Nombre, Id);
-        EnviarMensaje(Datos_Cliente,Preguntar_Disponibilidad);
-        System.out.println( ANSI_CYAN + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' envia un mensaje solicitando las disponibilidades. " + ANSI_RESET );
+        Mensaje Datos_Cliente = new Mensaje( TipoMensaje.DISPONIBILIDAD, Nombre, Id );
+        System.out.println( TEXTO_AZUL + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' envia un mensaje solicitando las disponibilidades. " + RESET_COLOR );
+        EnviarMensaje( Datos_Cliente, Preguntar_Disponibilidad );
     }
 
     /**
@@ -122,37 +120,30 @@ public class ClienteParticular implements Runnable {
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
     public void RealizarReserva( Mensaje Respuesta ) throws JMSException{
-
         int Num_Viaje = -1, Num_Estancia = -1;
         boolean Elegir_Estancia = Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_ESTANCIA;
-        boolean Elegir_Viaje = Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_VIAJE;
         boolean Cancelacion = Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_CANCELACION;
 
-        List<Viaje> Lista_Viajes_Disponibles = Respuesta.getLista_Viajes_Disponibles();
-        List<Estancia> Lista_Estancias_Disponibles = Respuesta.getLista_Estancias_Disponibles();
+        List<Viaje> Lista_Viajes = Respuesta.getLista_Viajes_Disponibles();
+        List<Estancia> Lista_Estancias = Respuesta.getLista_Estancias_Disponibles();
 
-        if( Elegir_Viaje && Elegir_Estancia ){
-            Viaje Viaje_Elegido = Lista_Viajes_Disponibles.get( Numero_Aleatorio.nextInt(Lista_Viajes_Disponibles.size()));
+        if( Elegir_Estancia ){
+            Viaje Viaje_Elegido = Lista_Viajes.get( Numero_Aleatorio.nextInt(Lista_Viajes.size()));
             Num_Viaje = Viaje_Elegido.getID();
-            Estancia Estancia_Elegida = Lista_Estancias_Disponibles.get( Numero_Aleatorio.nextInt(Lista_Estancias_Disponibles.size()));
+            Estancia Estancia_Elegida = Lista_Estancias.get( Numero_Aleatorio.nextInt(Lista_Estancias.size()));
             Num_Estancia = Estancia_Elegida.getId();
-        }
-        if(Elegir_Viaje && !Elegir_Estancia){
-            Viaje Viaje_Elegido = Lista_Viajes_Disponibles.get( Numero_Aleatorio.nextInt(Lista_Viajes_Disponibles.size()));
+        }else{
+            Viaje Viaje_Elegido = Lista_Viajes.get( Numero_Aleatorio.nextInt(Lista_Viajes.size()));
             Num_Viaje = Viaje_Elegido.getID();
         }
-        if(!Elegir_Viaje && Elegir_Estancia){
-            Estancia Estancia_Elegida = Lista_Estancias_Disponibles.get( Numero_Aleatorio.nextInt(Lista_Estancias_Disponibles.size()));
-            Num_Estancia = Estancia_Elegida.getId();
-        }
 
-        Respuesta.setTipo_Mensaje(TipoMensaje.RESERVA);
-        Respuesta.setCancelacion_Viaje(Cancelacion);
-        Respuesta.setNum_Viaje(Num_Viaje);
-        Respuesta.setNum_Estancia(Num_Estancia);
+        Respuesta.setTipo_Mensaje( TipoMensaje.RESERVA );
+        Respuesta.setCancelacion_Viaje( Cancelacion );
+        Respuesta.setNum_Viaje( Num_Viaje );
+        Respuesta.setNum_Estancia( Num_Estancia );
 
-        EnviarMensaje(Respuesta, Realizacion_Reserva);
-        System.out.println( ANSI_CYAN + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' envia una peticion de reserva." + ANSI_RESET );
+        System.out.println( TEXTO_AZUL + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' envia una peticion de reserva." + RESET_COLOR );
+        EnviarMensaje( Respuesta, Realizacion_Reserva );
     }
 
     /**
@@ -160,30 +151,26 @@ public class ClienteParticular implements Runnable {
      * @param Respuesta Mensaje que contiene la información de la reserva.
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
-    public void RealizarPagoReserva(Mensaje Respuesta) throws JMSException{
+    public void RealizarPagoReserva( Mensaje Respuesta ) throws JMSException{
         double Pago_Total_Cliente = Respuesta.getNum_Viaje() != -1 ? Respuesta.getLista_Viajes_Disponibles().get(Respuesta.getNum_Viaje()).getPrecio() : 0;
         Pago_Total_Cliente = Respuesta.getNum_Estancia() != -1 ? Pago_Total_Cliente + Respuesta.getLista_Estancias_Disponibles().get(Respuesta.getNum_Estancia()).getPrecio() : Pago_Total_Cliente + 0;
         Pago_Total_Cliente = Respuesta.isCancelacion_Viaje() ? Pago_Total_Cliente * PENALIZACION_POR_CANCELACION : Pago_Total_Cliente;
 
-        Respuesta.setTipo_Mensaje(TipoMensaje.PAGAR);
-        Respuesta.setPago(Pago_Total_Cliente);
-        EnviarMensaje(Respuesta, Realizacion_Pago);
-        System.out.println( ANSI_CYAN + "CP--> Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje indicando que ha realizado el pago de la reserva. " + ANSI_RESET );
-
+        Respuesta.setPago( Pago_Total_Cliente );
+        Respuesta.setTipo_Mensaje( TipoMensaje.PAGAR );
+        System.out.println( TEXTO_AZUL + "CP--> Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje indicando que ha realizado el pago de la reserva. " + RESET_COLOR );
+        EnviarMensaje( Respuesta, Realizacion_Pago );
     }
-
 
     /**
      * Método para enviar un mensaje al servidor pidiendo la cancelacion de la reserva previamente hecha.
      * @param MensajeCancelacion Mensaje que contiene la información de la reserva.
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
-    public void CancelarReserva(Mensaje MensajeCancelacion) throws JMSException{
-
-        MensajeCancelacion.setTipo_Mensaje(TipoMensaje.CANCELACION);
-        EnviarMensaje(MensajeCancelacion,Realizacion_Cancelacion);
-        System.out.println( ANSI_CYAN + "CP--> Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje solicitando la cancelacion de la reserva que habia realizado. " + ANSI_RESET );
-
+    public void CancelarReserva( Mensaje MensajeCancelacion ) throws JMSException{
+        MensajeCancelacion.setTipo_Mensaje( TipoMensaje.CANCELACION );
+        System.out.println( TEXTO_AZUL + "CP--> Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje solicitando la cancelacion de la reserva que habia realizado. " + RESET_COLOR );
+        EnviarMensaje( MensajeCancelacion, Realizacion_Cancelacion );
     }
 
     /**
@@ -193,12 +180,11 @@ public class ClienteParticular implements Runnable {
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
     private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon ) throws JMSException{
-        MensajeCliente.setTipo_Cliente(TipoCliente.PARTICULAR);
+        MensajeCliente.setTipo_Cliente( TipoCliente.PARTICULAR );
 
         GsonUtil<Mensaje> GsonUtil = new GsonUtil<>();
         MessageProducer Producer_Particular = session.createProducer( Buzon );
-        TextMessage Mensaje_Codificado = session.createTextMessage(GsonUtil.encode(MensajeCliente,Mensaje.class));
-        Producer_Particular.send( Mensaje_Codificado );
+        Producer_Particular.send( session.createTextMessage(GsonUtil.encode(MensajeCliente,Mensaje.class)) );
         Producer_Particular.close();
     }
 
@@ -208,21 +194,16 @@ public class ClienteParticular implements Runnable {
      * @return El mensaje que ha sido recibido del servidor decodificado.
      * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
      */
-    private Mensaje RecibirMensaje( Destination Buzon ) throws JMSException,InterruptedException{
+    private Mensaje RecibirMensaje( Destination Buzon ) throws JMSException, InterruptedException{
         Sem_Clientes_Particulares.get(Id).acquire();
 
         GsonUtil<Mensaje> gsonUtil = new GsonUtil<>();
         MessageConsumer Consumer_Particular = session.createConsumer( Buzon );
         TextMessage Mensaje_Codificado = (TextMessage) Consumer_Particular.receive();
-        Mensaje Respuesta_Servidor = null;
-        
-        try {
-            Respuesta_Servidor = gsonUtil.decode( Mensaje_Codificado.getText(), Mensaje.class );
-        } catch (JMSException ex) {
-            Logger.getLogger( ClienteParticular.class.getName()).log(Level.SEVERE, null, ex );
-        }
+        Mensaje Respuesta_Servidor = gsonUtil.decode( Mensaje_Codificado.getText(), Mensaje.class );
         Consumer_Particular.close();
-        System.out.println( ANSI_PURPLE + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Respuesta_Servidor.toString() + ". " + ANSI_RESET );
+
+        System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Respuesta_Servidor.toString() + ". " + RESET_COLOR );
         return Respuesta_Servidor;
     }
 
@@ -233,7 +214,7 @@ public class ClienteParticular implements Runnable {
                 connection.close();
             }
         }catch (JMSException ex){
-            System.out.println("Error al desconectar la conexion");
+            System.out.println( "Error al desconectar la conexion" );
         }
     }
 }
