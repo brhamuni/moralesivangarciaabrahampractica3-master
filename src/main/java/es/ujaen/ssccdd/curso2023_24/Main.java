@@ -1,5 +1,4 @@
 package es.ujaen.ssccdd.curso2023_24;
-
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 import es.ujaen.ssccdd.curso2023_24.Procesos.AgenciaViajes;
 import es.ujaen.ssccdd.curso2023_24.Procesos.ClienteParticular;
@@ -9,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
-
 public class Main {
 
     private static final int NUM_CLIENTES = Numero_Aleatorio.nextInt( MIN_CLIENTES, MAX_CLIENTES );
@@ -18,20 +16,20 @@ public class Main {
 
     private static void InicializacionSemaforos( List<Semaphore> Sem_Clientes_Particulares, List<Semaphore> Sem_Agencias_Viajes, int Num_Usuarios ) {
         for ( int i = 0; i < Num_Usuarios; ++i ) {
-            Sem_Clientes_Particulares.add(i, new Semaphore(0 ));
-            Sem_Agencias_Viajes.add(i, new Semaphore(0 ));
+            Sem_Clientes_Particulares.add( i, new Semaphore(0) );
+            Sem_Agencias_Viajes.add( i, new Semaphore(0) );
         }
     }
 
-    private static void CreacionEjecucionGestionViaje(ExecutorService Ejecucion_Procesos, List<Future<?>> Lista_Tareas, int Num_Clientes){
-        GestionViaje Nueva_Gestion = new GestionViaje(Num_Clientes,Sem_Clientes_Particulares,Sem_Agencias_Viajes);
+    private static void CreacionEjecucionGestionViaje( ExecutorService Ejecucion_Procesos, List<Future<?>> Lista_Tareas, int Num_Clientes ){
+        GestionViaje Nueva_Gestion = new GestionViaje( Num_Clientes, Sem_Clientes_Particulares, Sem_Agencias_Viajes );
         Future<?> Tarea_Gestion = Ejecucion_Procesos.submit( Nueva_Gestion );
         Lista_Tareas.add( Tarea_Gestion );
     }
 
-    private static void CreacionEjecucionClientesParticulares( ExecutorService Ejecucion_Procesos, List<Future<?>> Lista_Tareas, int Num_Clientes) {
+    private static void CreacionEjecucionClientesParticulares( ExecutorService Ejecucion_Procesos, List<Future<?>> Lista_Tareas, int Num_Clientes ) {
         for ( int i = 0; i < Num_Clientes; ++i ) {
-            ClienteParticular Nuevo_Cliente = new ClienteParticular( i,NUM_CLIENTES, Sem_Clientes_Particulares );
+            ClienteParticular Nuevo_Cliente = new ClienteParticular( i, Sem_Clientes_Particulares );
             Future<?> Nuevo_Proceso = Ejecucion_Procesos.submit( Nuevo_Cliente );
             Lista_Tareas.add( Nuevo_Proceso );
         }
@@ -39,9 +37,9 @@ public class Main {
 
     private static void CreacionEjecucionAgenciasViajes( ExecutorService Ejecucion_Procesos, List<Future<?>> Lista_Tareas, int Num_Clientes ) {
         for ( int i = 0; i < Num_Clientes; ++i ) {
-            AgenciaViajes Nuevo_Agencia = new AgenciaViajes( i, NUM_CLIENTES, Sem_Agencias_Viajes );
-            Future<?> Tarea_Agencia = Ejecucion_Procesos.submit( Nuevo_Agencia );
-            Lista_Tareas.add( Tarea_Agencia );
+            AgenciaViajes Nueva_Agencia = new AgenciaViajes( i, Sem_Agencias_Viajes );
+            Future<?> Nuevo_Proceso = Ejecucion_Procesos.submit( Nueva_Agencia );
+            Lista_Tareas.add( Nuevo_Proceso );
         }
     }
 

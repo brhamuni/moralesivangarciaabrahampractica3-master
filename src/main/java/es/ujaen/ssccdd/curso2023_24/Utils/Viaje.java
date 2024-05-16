@@ -10,7 +10,7 @@ public class Viaje {
     private final Double Precio_Viaje;
 
     /**
-     * @brief Constructor parametrizado de la clase Viaje.
+     * Constructor parametrizado de la clase Viaje.
      * @param ID Número de identificación único del viaje.
      */
     public Viaje( Integer ID ) {
@@ -22,28 +22,12 @@ public class Viaje {
     }
 
 
-    /**
-     * @brief Método para obtener el número de identificación del viaje.
-     * @return El número de identificación del viaje.
-     */
     public int getID() { return ID; }
-
-    /**
-     * @brief Métdodo para obtener el precio del viaje.
-     * @return El precio que cuesta el viaje.
-     */
     public double getPrecio(){ return  Precio_Viaje; }
-
-    /**
-     * @breief Método para obtener el número de plazas que quedan disponibles en el viaje.
-     * @return El número de plazas que hay disponibles en el viaje.
-     */
     public int getPlazasDisponibles(){ return Plazas_Disponibles; }
 
-    /**
-     * @breief Método para decrementar en una unidad las plazas que hay disponibles en el viaje.
-     */
-    public void decrementarPlazasViaje(){ Plazas_Disponibles = Plazas_Disponibles - 1; }
+    /**Método para decrementar en una unidad las plazas que hay disponibles en el viaje.*/
+    public void DecrementarPlazasViaje(){ Plazas_Disponibles = Plazas_Disponibles - 1; }
 
     @Override
     public String toString() {

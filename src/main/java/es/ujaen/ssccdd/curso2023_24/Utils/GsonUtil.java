@@ -5,7 +5,7 @@ public class GsonUtil<T> {
     private final Gson gson;
 
     /**
-     * @brief Constructor por defecto de la clase GsonUtil.
+     * Constructor por defecto de la clase GsonUtil.
      */
     public GsonUtil() {
         this.gson = new GsonBuilder().create();
@@ -17,9 +17,9 @@ public class GsonUtil<T> {
      * @param typeParameterClass tipo de la clase T
      * @return String en formato JSON
      */
-    public String encode(T contenido, Class<T> typeParameterClass) {
+    public String encode( T contenido, Class<T> typeParameterClass ) {
         if( contenido != null ) {
-            return gson.toJson(contenido, typeParameterClass);
+            return gson.toJson( contenido, typeParameterClass );
         }else {
             throw new NullPointerException();
         }
@@ -31,9 +31,9 @@ public class GsonUtil<T> {
      * @param typeParameterClass Tipo de la clase T que se espera
      * @return Un objeto del tipo T
      */
-    public T decode(String contenido, Class<T> typeParameterClass) {
+    public T decode( String contenido, Class<T> typeParameterClass ) {
         if( contenido != null ) {
-            return gson.fromJson(contenido, typeParameterClass);
+            return gson.fromJson( contenido, typeParameterClass );
         }else {
             throw new NullPointerException();
         }

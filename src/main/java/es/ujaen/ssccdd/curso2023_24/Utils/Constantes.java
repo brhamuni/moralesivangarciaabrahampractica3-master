@@ -16,10 +16,11 @@ public interface Constantes {
         public static LugaresViaje getNombreViajes(){
             return Estados_Nombre_Lugares[Numero_Aleatorio.nextInt(Estados_Nombre_Lugares.length)];
         }
+
     }
 
     enum NombreUsuarios{
-        IVAN, ABRAHAM, RODRIGO, MARIA, LUCIA, LEWANDOSKI, FERMIN, CARMEN;
+        JUAN, JOAQUIN, RODRIGO, MARIA, LUCIA, FRANCISCO, BALDOMERO, CARMEN;
         public static NombreUsuarios getNombre(){
             return Estados_Disponibles_Usuarios[Numero_Aleatorio.nextInt(Estados_Disponibles_Usuarios.length)];
         }
@@ -33,7 +34,7 @@ public interface Constantes {
     }
 
     enum TipoMensaje{
-        CLIENTE , RESERVA , DISPONIBLE , CANCELACION , PAGAR
+        RESERVA , DISPONIBILIDAD, CANCELACION , PAGAR
     }
 
     enum TipoCliente{
@@ -45,29 +46,36 @@ public interface Constantes {
     NombreUsuarios[] Estados_Disponibles_Usuarios = NombreUsuarios.values();
     NombreEstancia[] Estados_Disponibles_Estancia = NombreEstancia.values();
 
-    int MAX_CLIENTES = 4;
-    int MIN_CLIENTES = 3;
-    int MAX_PLAZAS = 5;
-    int MIN_PLAZAS = 2;
-    int MAX_VIAJES = 5;
-    int MIN_VIAJES = 2;
-    int MAX_ESTANCIAS = 5;
-    int MIN_ESTANCIAS = 2;
-    int NUM_TIPOS_CLIENTES = 2;
-    int NUM_GESTION_VIAJES = 1;
-    double MIN_PRECIO_ESTANCIA = 100.0;
-    double MAX_PRECIO_ESTANCIA = 900.0;
-    double MIN_PRECIO_VIAJE = 500.0;
-    double MAX_PRECIO_VIAJE = 3000.0;
-    int PROBABILIDAD_CANCELACION = 20;
-    int PROBABILIDAD_VIAJE = 85;
-    int PROBABILIDAD_ESTANCIA = 85;
-    double PENALIZACION_POR_CANCELACION = 1.2;
+    public static final int MAX_CLIENTES = 4;
+    public static final int MIN_CLIENTES = 3;
+    public static final int MAX_PLAZAS = 11;
+    public static final int MIN_PLAZAS = 10;
+    public static final int MAX_VIAJES = 4;
+    public static final int MIN_VIAJES = 2;
+    public static final int MAX_ESTANCIAS = 4;
+    public static final int MIN_ESTANCIAS = 2;
+    public static final int NUM_TIPOS_CLIENTES = 2;
+    public static final int NUM_GESTION_VIAJES = 1;
+    public static final double MIN_PRECIO_ESTANCIA = 100.0;
+    public static final double MAX_PRECIO_ESTANCIA = 900.0;
+    public static final double MIN_PRECIO_VIAJE = 500.0;
+    public static final double MAX_PRECIO_VIAJE = 3000.0;
+    public static final int PROBABILIDAD_CANCELACION = 20;
+    public static final int PROBABILIDAD_VIAJE = 85;
+    public static final int PROBABILIDAD_ESTANCIA = 85;
+    public static final double PENALIZACION_POR_CANCELACION = 1.2;
 
-    int TIEMPO_EJECUCION = 60;
-    int TIEMPO_ESPERA_MENSAJE = 1;
-    String QUEUE = "ssccdd.curso2024.MoralesIvanGarciaAbraham.";
+    public static final int TIEMPO_EJECUCION = 60;
+    public static final int TIEMPO_ESPERA_MENSAJE = 1;
+    public static final String QUEUE = "ssccdd.curso2024.MoralesIvanGarciaAbraham.";
 
     //public static final String BROKER_URL = "tcp://suleiman.ujaen.es:8018";
-    String BROKER_URL = "tcp://localhost:61616";
+    public static final String BROKER_URL = "tcp://localhost:61616";
+
+    public static final String ANSI_RED = "\u001B[31m";
+    public static final String ANSI_GREEN = "\u001B[32m";
+    public static final String ANSI_YELLOW = "\u001B[33m";
+    public static final String ANSI_PURPLE = "\u001B[35m";
+    public static final String ANSI_CYAN = "\u001B[36m";
+    public static final String ANSI_RESET = "\u001B[0m";
 }

@@ -1,5 +1,5 @@
 package es.ujaen.ssccdd.curso2023_24.Listener;
-
+import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 import es.ujaen.ssccdd.curso2023_24.Procesos.ClienteParticular;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
 import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
@@ -8,11 +8,11 @@ import java.util.List;
 import java.util.logging.*;
 
 public class TextMsgListenerGestion implements MessageListener {
-    private String Consumer_Name;
-    private List<Mensaje> Lista;
+    private final String Consumer_Name;
+    private final List<Mensaje> Lista;
 
     /**
-     * @brief Constructor parametrizado de la clase TextMsgListenerGestion.
+     * Constructor parametrizado de la clase TextMsgListenerGestion.
      * @param Consumer_Name Nombre para comprobar el tipo de mensaje que se ha recibido.
      * @param Lista_Mensaje_Clientes Lista dónde se almacenaran los mensajes recibidos de los clientes.
      */
@@ -23,40 +23,38 @@ public class TextMsgListenerGestion implements MessageListener {
 
     @Override
     public void onMessage(Message message) {
-        GsonUtil<Mensaje> gsonUtil = new GsonUtil();
+        GsonUtil<Mensaje> gsonUtil = new GsonUtil<>();
 
-        if (message instanceof TextMessage) {
-            TextMessage textMessage = (TextMessage) message;
+        if (message instanceof TextMessage textMessage) {
 
             if (Consumer_Name.equalsIgnoreCase("Disponibilidad Cliente")) {
-                Mensaje Mensaje_Cliente = Recibir_Mensaje(textMessage,gsonUtil);
-                System.out.println("Se ha recibido una solicitud de Disponibilidad del (CLIENTE " + Mensaje_Cliente.getNombre_Cliente() + ")");
+                Mensaje Mensaje_Cliente = Recibir_Mensaje( textMessage, gsonUtil );
+                System.out.println( ANSI_PURPLE + "SERVIDOR----> Se ha recibido un mensaje: " + Mensaje_Cliente.toString() + ". "  + ANSI_RESET );
                 Lista.add(Mensaje_Cliente);
-
             } else if (Consumer_Name.equalsIgnoreCase("Disponibilidad Agencia")) {
-                Mensaje Mensaje_Agencia = Recibir_Mensaje(textMessage,gsonUtil);
-                System.out.println("Se ha recibido una solicitud de Disponibilidad de la (AGENCIA " + Mensaje_Agencia.getNombre_Cliente() + ")");
+                Mensaje Mensaje_Agencia = Recibir_Mensaje( textMessage, gsonUtil );
+                System.out.println( ANSI_PURPLE + "SERVIDOR----> Se ha recibido un mensaje: " + Mensaje_Agencia.toString() + ". "  + ANSI_RESET );
                 Lista.add(Mensaje_Agencia);
             } else if (Consumer_Name.equalsIgnoreCase("Reserva")) {
-                Mensaje Mensaje_Cliente = Recibir_Mensaje(textMessage,gsonUtil);
-                System.out.println("Se ha recibido una solicitud de reserva de ( " + Mensaje_Cliente.getTipo_Cliente() + ": " + Mensaje_Cliente.getNombre_Cliente() +" "+ Mensaje_Cliente.getId_Cliente() +" )");
+                Mensaje Mensaje_Cliente = Recibir_Mensaje( textMessage, gsonUtil );
+                System.out.println( ANSI_PURPLE + "SERVIDOR----> Se ha recibido un mensaje: " + Mensaje_Cliente.toString() + ". "  + ANSI_RESET );
                 Lista.add(Mensaje_Cliente);
             } else if (Consumer_Name.equalsIgnoreCase("Pago")) {
-                Mensaje Mensaje_Cliente = Recibir_Mensaje(textMessage,gsonUtil);
-                System.out.println("Se ha recibido una solicitud de pago de ( " + Mensaje_Cliente.getTipo_Cliente() + ": " + Mensaje_Cliente.getNombre_Cliente() + " )");
+                Mensaje Mensaje_Cliente = Recibir_Mensaje( textMessage, gsonUtil );
+                System.out.println( ANSI_PURPLE + "SERVIDOR----> Se ha recibido un mensaje: " + Mensaje_Cliente.toString() + ". " + ANSI_RESET );
                 Lista.add(Mensaje_Cliente);
             } else if (Consumer_Name.equalsIgnoreCase("Cancelacion")) {
-                Mensaje Mensaje_Cliente = Recibir_Mensaje(textMessage,gsonUtil);
-                System.out.println("Se ha recibido una solicitud de cancelacion de ( " + Mensaje_Cliente.getTipo_Cliente() + ": " + Mensaje_Cliente.getNombre_Cliente() + " )");
+                Mensaje Mensaje_Cliente = Recibir_Mensaje( textMessage, gsonUtil );
+                System.out.println( ANSI_PURPLE + "SERVIDOR----> Se ha recibido un mensaje: " + Mensaje_Cliente.toString() + ". " + ANSI_RESET );
                 Lista.add(Mensaje_Cliente);
             } else {
-                System.out.println(Consumer_Name + " Unknown message");
+                System.out.println( Consumer_Name + " Unknown message" );
             }
         }
     }
 
     /**
-     * @brief Método que recibe un mensaje codificado y devuelve el mensaje decodificado.
+     * Método que recibe un mensaje codificado y devuelve el mensaje decodificado.
      * @param textMessage El mensaje de texto codificado que se ha recibido.
      * @param gsonUtil EL objeto GsonUtil que usaremos para decodificar el mensaje.
      * @return El mensaje que se ha recibido decodificado.
@@ -64,7 +62,7 @@ public class TextMsgListenerGestion implements MessageListener {
     private Mensaje Recibir_Mensaje( TextMessage textMessage, GsonUtil<Mensaje> gsonUtil) {
         Mensaje Mensaje_Cliente = null;
         try {
-            Mensaje_Cliente = gsonUtil.decode(textMessage.getText(), Mensaje.class);
+            Mensaje_Cliente = gsonUtil.decode( textMessage.getText(), Mensaje.class );
         } catch (JMSException ex) {
             Logger.getLogger(ClienteParticular.class.getName()).log(Level.SEVERE, null, ex);
         }
