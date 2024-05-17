@@ -1,9 +1,6 @@
 package es.ujaen.ssccdd.curso2023_24.Procesos;
-import static es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerClientes.*;
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
-
 import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerClientes;
-import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerGestion;
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
 import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
@@ -17,7 +14,7 @@ public class ClienteParticular implements Runnable {
     private final int Id;
     private final String Nombre;
     private final List<Mensaje> Mensaje;
-    private final List<Semaphore> Sem_Clientes_Particulares;
+    private final Semaphore Sem_Cliente_Particular;
 
     private Connection connection;
     private Session session;
@@ -35,11 +32,11 @@ public class ClienteParticular implements Runnable {
      * Constructor parametrizado de la clase ClienteParticular.
      * @param Id Número de identificación unico del cliente.
      */
-    public ClienteParticular( int Id, List<Semaphore> Sem_Clientes_Particulares ) {
+    public ClienteParticular( int Id ) {
         this.Id = Id;
         this.Nombre = "" + NombreUsuarios.getNombre();
         this.Mensaje = new ArrayList<>(1);
-        this.Sem_Clientes_Particulares = Sem_Clientes_Particulares;
+        this.Sem_Cliente_Particular = new Semaphore(0);
 
         Realizacion_Pago = null;
         Realizacion_Cancelacion = null;
@@ -75,26 +72,26 @@ public class ClienteParticular implements Runnable {
         connection = connectionFactory.createConnection();
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE );
 
-        Preguntar_Disponibilidad = session.createQueue(QUEUE + "Preguntar_Disponibilidad.Cliente" );
-        Realizacion_Reserva = session.createQueue(QUEUE + "Realizacion_Reserva.Cliente" );
-        Realizacion_Pago = session.createQueue(QUEUE + "Realizacion_Pago.Cliente" );
-        Realizacion_Cancelacion = session.createQueue(QUEUE + "Realizacion_Cancelacion.Cliente" );
-        Respuesta_Disponibilidad = session.createQueue(QUEUE + "Respuesta_Disponibilidad.Cliente" + Id );
-        Confirmacion_Reserva = session.createQueue(QUEUE + "Confirmacion_Reserva.Cliente" + Id );
-        Confirmacion_Pago =  session.createQueue(QUEUE + "Confirmacion_Pago.Cliente" + Id );
-        Respuesta_Cancelacion = session.createQueue(QUEUE + "Respuesta_Cancelacion.Cliente" + Id );
+        Preguntar_Disponibilidad = session.createQueue(DESTINO + "Preguntar_Disponibilidad.Cliente" );
+        Realizacion_Reserva = session.createQueue(DESTINO + "Realizacion_Reserva.Cliente" );
+        Realizacion_Pago = session.createQueue(DESTINO + "Realizacion_Pago.Cliente" );
+        Realizacion_Cancelacion = session.createQueue(DESTINO + "Realizacion_Cancelacion.Cliente" );
+        Respuesta_Disponibilidad = session.createQueue(DESTINO + "Respuesta_Disponibilidad.Cliente" + Id );
+        Confirmacion_Reserva = session.createQueue(DESTINO + "Confirmacion_Reserva.Cliente" + Id );
+        Confirmacion_Pago =  session.createQueue(DESTINO + "Confirmacion_Pago.Cliente" + Id );
+        Respuesta_Cancelacion = session.createQueue(DESTINO + "Respuesta_Cancelacion.Cliente" + Id );
 
         MessageConsumer Consumer_Cliente_Disponibilidad = session.createConsumer(Respuesta_Disponibilidad);
-        Consumer_Cliente_Disponibilidad.setMessageListener(new TextMsgListenerClientes("Disponibilidad", Mensaje, Sem_Clientes_Particulares));
+        Consumer_Cliente_Disponibilidad.setMessageListener(new TextMsgListenerClientes("Disponibilidad", Mensaje, Sem_Cliente_Particular) );
 
         MessageConsumer Consumer_Cliente_Reserva = session.createConsumer(Confirmacion_Reserva);
-        Consumer_Cliente_Reserva.setMessageListener(new TextMsgListenerClientes("Reserva", Mensaje, Sem_Clientes_Particulares));
+        Consumer_Cliente_Reserva.setMessageListener(new TextMsgListenerClientes("Reserva", Mensaje, Sem_Cliente_Particular) );
 
         MessageConsumer Consumer_Cliente_Pago = session.createConsumer(Confirmacion_Pago);
-        Consumer_Cliente_Pago.setMessageListener(new TextMsgListenerClientes("Pago", Mensaje, Sem_Clientes_Particulares));
+        Consumer_Cliente_Pago.setMessageListener(new TextMsgListenerClientes("Pago", Mensaje, Sem_Cliente_Particular) );
 
         MessageConsumer Consumer_Cliente_Cancelacion = session.createConsumer(Respuesta_Cancelacion);
-        Consumer_Cliente_Cancelacion.setMessageListener(new TextMsgListenerClientes("Cancelacion", Mensaje, Sem_Clientes_Particulares));
+        Consumer_Cliente_Cancelacion.setMessageListener(new TextMsgListenerClientes("Cancelacion", Mensaje, Sem_Cliente_Particular) );
 
         connection.start();
     }
@@ -138,7 +135,7 @@ public class ClienteParticular implements Runnable {
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
     public void RealizarReserva( Mensaje Respuesta ) throws JMSException{
-        int Num_Viaje = -1, Num_Estancia = -1;
+        int Num_Viaje, Num_Estancia = -1;
         boolean Elegir_Estancia = Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_ESTANCIA;
         boolean Cancelacion = Numero_Aleatorio.nextInt(100)<=PROBABILIDAD_CANCELACION;
 
@@ -176,7 +173,7 @@ public class ClienteParticular implements Runnable {
 
         Respuesta.setPago( Pago_Total_Cliente );
         Respuesta.setTipo_Mensaje( TipoMensaje.PAGAR );
-        System.out.println( TEXTO_AZUL + "CP--> Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje indicando que ha realizado el pago de la reserva. " + RESET_COLOR );
+        System.out.println( TEXTO_AZUL + "CP--> Cliente con nombre '" + Nombre + "' e ID '" + Id + "' envia un mensaje indicando que ha realizado el pago de la reserva. " + RESET_COLOR );
         EnviarMensaje( Respuesta, Realizacion_Pago );
     }
 
@@ -187,7 +184,7 @@ public class ClienteParticular implements Runnable {
      */
     public void CancelarReserva( Mensaje MensajeCancelacion ) throws JMSException{
         MensajeCancelacion.setTipo_Mensaje( TipoMensaje.CANCELACION );
-        System.out.println( TEXTO_AZUL + "CP--> Cliente con nombre '" + Nombre + "' e ID '(" + Id + ")' envia un mensaje solicitando la cancelacion de la reserva que habia realizado. " + RESET_COLOR );
+        System.out.println( TEXTO_AZUL + "CP--> Cliente con nombre '" + Nombre + "' e ID '" + Id + "' envia un mensaje solicitando la cancelacion de la reserva que habia realizado. " + RESET_COLOR );
         EnviarMensaje( MensajeCancelacion, Realizacion_Cancelacion );
     }
 
@@ -207,15 +204,13 @@ public class ClienteParticular implements Runnable {
     }
 
     /**
-     * Metodo que recibe un mensaje del servidor y lo decodifica.
+     * Metodo que para obtener el mensaje que ha enviado el servidor.
      * @param Mensaje Lista de mensajes donde se encontrara el mensaje que recibimos del servidor.
      * @return El mensaje que ha sido recibido del servidor decodificado.
-     * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
      */
-    private Mensaje RecibirMensaje( List<Mensaje> Mensaje ) throws JMSException, InterruptedException{
-        Sem_Clientes_Particulares.get(Id).acquire();
-        Mensaje Respuesta_Servidor = Mensaje.remove(0);
-        return Respuesta_Servidor;
+    private Mensaje RecibirMensaje( List<Mensaje> Mensaje ) throws InterruptedException{
+        Sem_Cliente_Particular.acquire();
+        return Mensaje.remove(0);
     }
 
     /** Método que cierra la conexión con el servidor, liberando todos los recursos asociados. */

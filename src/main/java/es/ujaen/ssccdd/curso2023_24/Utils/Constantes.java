@@ -66,7 +66,7 @@ public interface Constantes {
 
     public static final int TIEMPO_EJECUCION = 60;
     public static final int TIEMPO_ESPERA_MENSAJE = 1;
-    public static final String QUEUE = "ssccdd.curso2024.MoralesIvanGarciaAbraham.";
+    public static final String DESTINO = "ssccdd.curso2024.MoralesIvanGarciaAbraham.";
 
     //public static final String BROKER_URL = "tcp://suleiman.ujaen.es:8018";
     public static final String BROKER_URL = "tcp://localhost:61616";

@@ -95,49 +95,49 @@ public class GestionViaje implements Runnable {
         connection = connectionFactory.createConnection();
         session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-        Preguntar_Disponibilidad.add(0, session.createQueue(QUEUE + "Preguntar_Disponibilidad.Cliente"));
-        Preguntar_Disponibilidad.add(1, session.createQueue(QUEUE + "Preguntar_Disponibilidad.Agencia"));
-        Realizacion_Reserva.add(0, session.createQueue(QUEUE + "Realizacion_Reserva.Cliente"));
-        Realizacion_Reserva.add(1, session.createQueue(QUEUE + "Realizacion_Reserva.Agencia"));
-        Realizacion_Pago.add(0, session.createQueue(QUEUE + "Realizacion_Pago.Cliente"));
-        Realizacion_Pago.add(1, session.createQueue(QUEUE + "Realizacion_Pago.Agencia"));
-        Realizacion_Cancelacion.add(0, session.createQueue(QUEUE + "Realizacion_Cancelacion.Cliente"));
-        Realizacion_Cancelacion.add(1, session.createQueue(QUEUE + "Realizacion_Cancelacion.Agencia"));
+        Preguntar_Disponibilidad.add(0, session.createQueue(DESTINO + "Preguntar_Disponibilidad.Cliente") );
+        Preguntar_Disponibilidad.add(1, session.createQueue(DESTINO + "Preguntar_Disponibilidad.Agencia") );
+        Realizacion_Reserva.add(0, session.createQueue(DESTINO + "Realizacion_Reserva.Cliente") );
+        Realizacion_Reserva.add(1, session.createQueue(DESTINO + "Realizacion_Reserva.Agencia") );
+        Realizacion_Pago.add(0, session.createQueue(DESTINO + "Realizacion_Pago.Cliente") );
+        Realizacion_Pago.add(1, session.createQueue(DESTINO + "Realizacion_Pago.Agencia") );
+        Realizacion_Cancelacion.add(0, session.createQueue(DESTINO + "Realizacion_Cancelacion.Cliente") );
+        Realizacion_Cancelacion.add(1, session.createQueue(DESTINO + "Realizacion_Cancelacion.Agencia") );
 
         for (int i = 0; i < Num_Clientes; ++i) {
-            Respuesta_Disponibilidad[0][i] = session.createQueue(QUEUE + "Respuesta_Disponibilidad.Cliente" + i );
-            Respuesta_Disponibilidad[1][i] = session.createQueue(QUEUE + "Respuesta_Disponibilidad.Agencia" + i );
-            Confirmacion_Pago[0][i] = session.createQueue(QUEUE + "Confirmacion_Pago.Cliente" + i );
-            Confirmacion_Pago[1][i] = session.createQueue(QUEUE + "Confirmacion_Pago.Agencia" + i );
-            Confirmacion_Reserva[0][i] = session.createQueue(QUEUE + "Confirmacion_Reserva.Cliente" + i );
-            Confirmacion_Reserva[1][i] = session.createQueue(QUEUE + "Confirmacion_Reserva.Agencia" + i );
-            Respuesta_Cancelacion[0][i] = session.createQueue(QUEUE + "Respuesta_Cancelacion.Cliente" + i );
-            Respuesta_Cancelacion[1][i] = session.createQueue(QUEUE + "Respuesta_Cancelacion.Agencia" + i );
+            Respuesta_Disponibilidad[0][i] = session.createQueue(DESTINO + "Respuesta_Disponibilidad.Cliente" + i );
+            Respuesta_Disponibilidad[1][i] = session.createQueue(DESTINO + "Respuesta_Disponibilidad.Agencia" + i );
+            Confirmacion_Pago[0][i] = session.createQueue(DESTINO + "Confirmacion_Pago.Cliente" + i );
+            Confirmacion_Pago[1][i] = session.createQueue(DESTINO + "Confirmacion_Pago.Agencia" + i );
+            Confirmacion_Reserva[0][i] = session.createQueue(DESTINO + "Confirmacion_Reserva.Cliente" + i );
+            Confirmacion_Reserva[1][i] = session.createQueue(DESTINO + "Confirmacion_Reserva.Agencia" + i );
+            Respuesta_Cancelacion[0][i] = session.createQueue(DESTINO + "Respuesta_Cancelacion.Cliente" + i );
+            Respuesta_Cancelacion[1][i] = session.createQueue(DESTINO + "Respuesta_Cancelacion.Agencia" + i );
         }
 
         MessageConsumer Consumer_Cliente_Disponibilidad = session.createConsumer(Preguntar_Disponibilidad.get(0));
-        Consumer_Cliente_Disponibilidad.setMessageListener(new TextMsgListenerGestion("Disponibilidad Cliente", Lista_Cliente_Particular));
+        Consumer_Cliente_Disponibilidad.setMessageListener( new TextMsgListenerGestion("Disponibilidad Cliente", Lista_Cliente_Particular) );
 
         MessageConsumer Consumer_Agencia_Disponibilidad = session.createConsumer(Preguntar_Disponibilidad.get(1));
-        Consumer_Agencia_Disponibilidad.setMessageListener(new TextMsgListenerGestion("Disponibilidad Agencia", Lista_Agencias_Viaje));
+        Consumer_Agencia_Disponibilidad.setMessageListener( new TextMsgListenerGestion("Disponibilidad Agencia", Lista_Agencias_Viaje) );
 
         MessageConsumer Consumer_Cliente_Reserva = session.createConsumer(Realizacion_Reserva.get(0));
-        Consumer_Cliente_Reserva.setMessageListener(new TextMsgListenerGestion("Reserva", Lista_Peticiones_Reserva));
+        Consumer_Cliente_Reserva.setMessageListener( new TextMsgListenerGestion("Reserva", Lista_Peticiones_Reserva) );
 
         MessageConsumer Consumer_Agencia_Reserva = session.createConsumer(Realizacion_Reserva.get(1));
-        Consumer_Agencia_Reserva.setMessageListener(new TextMsgListenerGestion("Reserva", Lista_Peticiones_Reserva));
+        Consumer_Agencia_Reserva.setMessageListener( new TextMsgListenerGestion("Reserva", Lista_Peticiones_Reserva) );
 
         MessageConsumer Consumer_Cliente_Pago = session.createConsumer(Realizacion_Pago.get(0));
-        Consumer_Cliente_Pago.setMessageListener(new TextMsgListenerGestion("Pago", Lista_Peticiones_Pago));
+        Consumer_Cliente_Pago.setMessageListener ( new TextMsgListenerGestion("Pago", Lista_Peticiones_Pago) );
 
         MessageConsumer Consumer_Agencia_Pago = session.createConsumer(Realizacion_Pago.get(1));
-        Consumer_Agencia_Pago.setMessageListener(new TextMsgListenerGestion("Pago", Lista_Peticiones_Pago));
+        Consumer_Agencia_Pago.setMessageListener( new TextMsgListenerGestion("Pago", Lista_Peticiones_Pago) );
 
         MessageConsumer Consumer_Cliente_Cancelacion = session.createConsumer(Realizacion_Cancelacion.get(0));
-        Consumer_Cliente_Cancelacion.setMessageListener(new TextMsgListenerGestion("Cancelacion", Lista_Peticiones_Cancelacion));
+        Consumer_Cliente_Cancelacion.setMessageListener( new TextMsgListenerGestion("Cancelacion", Lista_Peticiones_Cancelacion) );
 
         MessageConsumer Consumer_Agencia_Cancelacion = session.createConsumer(Realizacion_Cancelacion.get(1));
-        Consumer_Agencia_Cancelacion.setMessageListener(new TextMsgListenerGestion("Cancelacion", Lista_Peticiones_Cancelacion));
+        Consumer_Agencia_Cancelacion.setMessageListener( new TextMsgListenerGestion("Cancelacion", Lista_Peticiones_Cancelacion) );
 
         connection.start();
     }
@@ -334,8 +334,8 @@ public class GestionViaje implements Runnable {
         MensajeCliente.setTipo_Cliente( TipoCliente.SERVIDOR );
 
         GsonUtil<Mensaje> gsonUtil = new GsonUtil<>();
-        MessageProducer producer = session.createProducer(Buzon);
-        producer.send(session.createTextMessage(gsonUtil.encode(MensajeCliente, Mensaje.class)));
+        MessageProducer producer = session.createProducer( Buzon );
+        producer.send( session.createTextMessage(gsonUtil.encode(MensajeCliente, Mensaje.class)) );
         producer.close();
     }
 
@@ -346,7 +346,7 @@ public class GestionViaje implements Runnable {
                 connection.close();
             }
         } catch (JMSException ex) {
-            System.out.println("Error al cerrar la conexión");
+            System.out.println( "Error al cerrar la conexión" );
         }
     }
 }

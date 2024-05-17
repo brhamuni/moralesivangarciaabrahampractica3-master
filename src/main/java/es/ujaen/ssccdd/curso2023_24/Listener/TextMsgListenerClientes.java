@@ -11,17 +11,18 @@ import java.util.logging.*;
 public class TextMsgListenerClientes implements MessageListener {
     private final String Consumer_Name;
     private final List<Mensaje> Lista;
-    private final List<Semaphore> Sem_Clientes_Particulares;
+    private final Semaphore Sem_Cliente_Particular;
 
     /**
      * Constructor parametrizado de la clase TextMsgListenerGestion.
      * @param Consumer_Name Nombre para comprobar el tipo de mensaje que se ha recibido.
      * @param Lista_Mensaje_Clientes Lista dónde se almacenaran los mensajes recibidos de los clientes.
+     * @param Sem_Cliente_Particular Semaforo para desbloquear al cliente una vez que recibe un mensaje.
      */
-    public TextMsgListenerClientes(String Consumer_Name, List<Mensaje> Lista_Mensaje_Clientes, List<Semaphore> Sem_Clientes_Particulares) {
+    public TextMsgListenerClientes( String Consumer_Name, List<Mensaje> Lista_Mensaje_Clientes, Semaphore Sem_Cliente_Particular ) {
         this.Consumer_Name = Consumer_Name;
         this.Lista = Lista_Mensaje_Clientes;
-        this.Sem_Clientes_Particulares = Sem_Clientes_Particulares;
+        this.Sem_Cliente_Particular = Sem_Cliente_Particular;
     }
 
     @Override
@@ -30,26 +31,30 @@ public class TextMsgListenerClientes implements MessageListener {
 
         if (message instanceof TextMessage textMessage) {
 
-            if (Consumer_Name.equalsIgnoreCase("Disponibilidad")) {
+            if ( Consumer_Name.equalsIgnoreCase("Disponibilidad") ) {
                 Mensaje Mensaje_Servidor = Recibir_Mensaje( textMessage, gsonUtil );
-                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". "  + RESET_COLOR);
+                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". "  + RESET_COLOR );
                 Lista.add(Mensaje_Servidor);
-                Sem_Clientes_Particulares.get(Mensaje_Servidor.getId_Cliente()).release();
-            } else if (Consumer_Name.equalsIgnoreCase("Reserva")) {
+                Sem_Cliente_Particular.release();
+
+            } else if ( Consumer_Name.equalsIgnoreCase("Reserva") ) {
                 Mensaje Mensaje_Servidor = Recibir_Mensaje( textMessage, gsonUtil );
-                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". "  + RESET_COLOR);
+                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". "  + RESET_COLOR );
                 Lista.add(Mensaje_Servidor);
-                Sem_Clientes_Particulares.get(Mensaje_Servidor.getId_Cliente()).release();
-            } else if (Consumer_Name.equalsIgnoreCase("Pago")) {
+                Sem_Cliente_Particular.release();
+
+            } else if ( Consumer_Name.equalsIgnoreCase("Pago") ) {
                 Mensaje Mensaje_Servidor = Recibir_Mensaje( textMessage, gsonUtil );
-                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". " + RESET_COLOR);
+                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". " + RESET_COLOR );
                 Lista.add(Mensaje_Servidor);
-                Sem_Clientes_Particulares.get(Mensaje_Servidor.getId_Cliente()).release();
-            } else if (Consumer_Name.equalsIgnoreCase("Cancelacion")) {
+                Sem_Cliente_Particular.release();
+
+            } else if ( Consumer_Name.equalsIgnoreCase("Cancelacion") ) {
                 Mensaje Mensaje_Servidor = Recibir_Mensaje( textMessage, gsonUtil );
-                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". " + RESET_COLOR);
+                System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Mensaje_Servidor.toString() + ". " + RESET_COLOR );
                 Lista.add(Mensaje_Servidor);
-                Sem_Clientes_Particulares.get(Mensaje_Servidor.getId_Cliente()).release();
+                Sem_Cliente_Particular.release();
+
             } else {
                 System.out.println( Consumer_Name + " Unknown message" );
             }
@@ -62,7 +67,7 @@ public class TextMsgListenerClientes implements MessageListener {
      * @param gsonUtil EL objeto GsonUtil que usaremos para decodificar el mensaje.
      * @return El mensaje que se ha recibido decodificado.
      */
-    private Mensaje Recibir_Mensaje( TextMessage textMessage, GsonUtil<Mensaje> gsonUtil) {
+    private Mensaje Recibir_Mensaje( TextMessage textMessage, GsonUtil<Mensaje> gsonUtil ) {
         Mensaje Mensaje_Servidor = null;
         try {
             Mensaje_Servidor = gsonUtil.decode( textMessage.getText(), Mensaje.class );
