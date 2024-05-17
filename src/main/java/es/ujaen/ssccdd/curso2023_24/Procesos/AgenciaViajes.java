@@ -2,6 +2,7 @@ package es.ujaen.ssccdd.curso2023_24.Procesos;
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
 import static es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerAgencias.*;
 
+import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerAgencias;
 import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerGestion;
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
@@ -9,6 +10,7 @@ import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
 import es.ujaen.ssccdd.curso2023_24.Utils.Viaje;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import javax.jms.*;
+import java.nio.channels.SeekableByteChannel;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -84,16 +86,16 @@ public class AgenciaViajes implements Runnable {
         Respuesta_Cancelacion = session.createQueue(QUEUE + "Respuesta_Cancelacion.Agencia" + Id );
 
         MessageConsumer Consumer_Agencia_Disponibilidad = session.createConsumer(Respuesta_Disponibilidad);
-        Consumer_Agencia_Disponibilidad.setMessageListener(new TextMsgListenerGestion("Disponibilidad", Mensaje));
+        Consumer_Agencia_Disponibilidad.setMessageListener(new TextMsgListenerAgencias("Disponibilidad", Mensaje, Sem_Agencia_Viajes));
 
         MessageConsumer Consumer_Agencia_Reserva = session.createConsumer(Confirmacion_Reserva);
-        Consumer_Agencia_Reserva.setMessageListener(new TextMsgListenerGestion("Reserva", Mensaje));
+        Consumer_Agencia_Reserva.setMessageListener(new TextMsgListenerAgencias("Reserva", Mensaje, Sem_Agencia_Viajes));
 
         MessageConsumer Consumer_Agencia_Pago = session.createConsumer(Confirmacion_Pago);
-        Consumer_Agencia_Pago.setMessageListener(new TextMsgListenerGestion("Pago", Mensaje));
+        Consumer_Agencia_Pago.setMessageListener(new TextMsgListenerAgencias("Pago", Mensaje, Sem_Agencia_Viajes));
 
         MessageConsumer Consumer_Agencia_Cancelacion = session.createConsumer(Respuesta_Cancelacion);
-        Consumer_Agencia_Cancelacion.setMessageListener(new TextMsgListenerGestion("Cancelacion", Mensaje));
+        Consumer_Agencia_Cancelacion.setMessageListener(new TextMsgListenerAgencias("Cancelacion", Mensaje, Sem_Agencia_Viajes));
 
 
         connection.start();
