@@ -22,7 +22,7 @@ public class Main {
     }
 
     private static void CreacionEjecucionGestionViaje( ExecutorService Ejecucion_Procesos, List<Future<?>> Lista_Tareas, int Num_Clientes ){
-        GestionViaje Nueva_Gestion = new GestionViaje( Num_Clientes, Sem_Clientes_Particulares, Sem_Agencias_Viajes );
+        GestionViaje Nueva_Gestion = new GestionViaje( Num_Clientes );
         Future<?> Tarea_Gestion = Ejecucion_Procesos.submit( Nueva_Gestion );
         Lista_Tareas.add( Tarea_Gestion );
     }
@@ -69,8 +69,8 @@ public class Main {
         // Cuerpo de ejecución
         System.out.println( "Hilo(Principal) Comienza su ejecución " );
         CreacionEjecucionGestionViaje(Ejecucion_Procesos,Lista_Tareas, NUM_CLIENTES );
-        CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
-        CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
+        //CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
+        //CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas, NUM_CLIENTES );
 
         // Resultados ejecucion.
         EsperaFinalizacionPrograma( Ejecucion_Procesos, Ejecucion, Fin_Ejecucion, Lista_Tareas );

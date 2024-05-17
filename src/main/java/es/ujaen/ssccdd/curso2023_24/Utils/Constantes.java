@@ -68,8 +68,8 @@ public interface Constantes {
     public static final int TIEMPO_ESPERA_MENSAJE = 1;
     public static final String QUEUE = "ssccdd.curso2024.MoralesIvanGarciaAbraham.";
 
-    //public static final String BROKER_URL = "tcp://suleiman.ujaen.es:8018";
-    public static final String BROKER_URL = "tcp://localhost:61616";
+    public static final String BROKER_URL = "tcp://suleiman.ujaen.es:8018";
+    //public static final String BROKER_URL = "tcp://localhost:61616";
 
     public static final String TEXTO_ROJO = "\u001B[31m";
     public static final String TEXTO_VERDE = "\u001B[32m";

@@ -1,5 +1,9 @@
 package es.ujaen.ssccdd.curso2023_24.Procesos;
+import static es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerClientes.*;
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
+
+import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerClientes;
+import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerGestion;
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
 import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
@@ -12,6 +16,7 @@ import java.util.concurrent.*;
 public class ClienteParticular implements Runnable {
     private final int Id;
     private final String Nombre;
+    private final List<Mensaje> Mensaje;
     private final List<Semaphore> Sem_Clientes_Particulares;
 
     private Connection connection;
@@ -33,6 +38,7 @@ public class ClienteParticular implements Runnable {
     public ClienteParticular( int Id, List<Semaphore> Sem_Clientes_Particulares ) {
         this.Id = Id;
         this.Nombre = "" + NombreUsuarios.getNombre();
+        this.Mensaje = new ArrayList<>(1);
         this.Sem_Clientes_Particulares = Sem_Clientes_Particulares;
 
         Realizacion_Pago = null;
@@ -78,25 +84,37 @@ public class ClienteParticular implements Runnable {
         Confirmacion_Pago =  session.createQueue(QUEUE + "Confirmacion_Pago.Cliente" + Id );
         Respuesta_Cancelacion = session.createQueue(QUEUE + "Respuesta_Cancelacion.Cliente" + Id );
 
+        MessageConsumer Consumer_Cliente_Disponibilidad = session.createConsumer(Respuesta_Disponibilidad);
+        Consumer_Cliente_Disponibilidad.setMessageListener(new TextMsgListenerClientes("Disponibilidad", Mensaje, Sem_Clientes_Particulares));
+
+        MessageConsumer Consumer_Cliente_Reserva = session.createConsumer(Confirmacion_Reserva);
+        Consumer_Cliente_Reserva.setMessageListener(new TextMsgListenerClientes("Reserva", Mensaje,Sem_Clientes_Particulares));
+
+        MessageConsumer Consumer_Cliente_Pago = session.createConsumer(Confirmacion_Pago);
+        Consumer_Cliente_Pago.setMessageListener(new TextMsgListenerClientes("Pago", Mensaje, Sem_Clientes_Particulares));
+
+        MessageConsumer Consumer_Cliente_Cancelacion = session.createConsumer(Respuesta_Cancelacion);
+        Consumer_Cliente_Cancelacion.setMessageListener(new TextMsgListenerClientes("Cancelacion", Mensaje, Sem_Clientes_Particulares));
+
         connection.start();
     }
 
     public void execution() throws Exception {
         ComprobarDisponibilidad();
-        Mensaje Respuesta_Servidor = RecibirMensaje( Respuesta_Disponibilidad );
+        Mensaje Respuesta_Servidor = RecibirMensaje( Mensaje );
 
         RealizarReserva( Respuesta_Servidor );
-        Respuesta_Servidor = RecibirMensaje( Confirmacion_Reserva );
+        Respuesta_Servidor = RecibirMensaje( Mensaje );
 
         if( !Respuesta_Servidor.isReserva_Correcta() ){
             System.out.println( TEXTO_ROJO + "No habia plazas suficientes y por tanto la peticion de reserva no se ha podido realizar correctamente." + RESET_COLOR );
         }else {
             RealizarPagoReserva( Respuesta_Servidor );
-            Respuesta_Servidor = RecibirMensaje( Confirmacion_Pago );
+            Respuesta_Servidor = RecibirMensaje( Mensaje );
 
             if (Respuesta_Servidor.isPago_Correcto() && Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
                 CancelarReserva( Respuesta_Servidor );
-                RecibirMensaje( Respuesta_Cancelacion );
+                RecibirMensaje( Mensaje );
                 System.out.println( TEXTO_ROJO + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' finalmente ha cancelado la reserva y no se va de vacaciones. " + RESET_COLOR );
             }else{
                 System.out.println( TEXTO_VERDE + "CP--> Cliente con Nombre: '" + Nombre + "' e Id: '" + Id + "' se va de vacaciones. " + RESET_COLOR );
@@ -190,20 +208,13 @@ public class ClienteParticular implements Runnable {
 
     /**
      * Metodo que recibe un mensaje del servidor y lo decodifica.
-     * @param Buzon Buzon por donde se va a recibir el mensaje.
+     * @param Mensaje Lista de mensajes donde se encontrara el mensaje que recibimos del servidor.
      * @return El mensaje que ha sido recibido del servidor decodificado.
      * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
      */
-    private Mensaje RecibirMensaje( Destination Buzon ) throws JMSException, InterruptedException{
+    private Mensaje RecibirMensaje( List<Mensaje> Mensaje ) throws JMSException, InterruptedException{
         Sem_Clientes_Particulares.get(Id).acquire();
-
-        GsonUtil<Mensaje> gsonUtil = new GsonUtil<>();
-        MessageConsumer Consumer_Particular = session.createConsumer( Buzon );
-        TextMessage Mensaje_Codificado = (TextMessage) Consumer_Particular.receive();
-        Mensaje Respuesta_Servidor = gsonUtil.decode( Mensaje_Codificado.getText(), Mensaje.class );
-        Consumer_Particular.close();
-
-        System.out.println( TEXTO_MORADO + "CLIENTE PARTICULAR----> Se ha recibido un mensaje: " + Respuesta_Servidor.toString() + ". " + RESET_COLOR );
+        Mensaje Respuesta_Servidor = Mensaje.remove(0);
         return Respuesta_Servidor;
     }
 

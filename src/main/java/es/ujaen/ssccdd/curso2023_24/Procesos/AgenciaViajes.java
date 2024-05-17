@@ -1,5 +1,8 @@
 package es.ujaen.ssccdd.curso2023_24.Procesos;
 import static es.ujaen.ssccdd.curso2023_24.Utils.Constantes.*;
+import static es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerAgencias.*;
+
+import es.ujaen.ssccdd.curso2023_24.Listener.TextMsgListenerGestion;
 import es.ujaen.ssccdd.curso2023_24.Utils.Estancia;
 import es.ujaen.ssccdd.curso2023_24.Utils.GsonUtil;
 import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
@@ -13,6 +16,7 @@ public class AgenciaViajes implements Runnable {
     private final int Id;
     private final String Nombre;
     private final List<Semaphore> Sem_Agencia_Viajes;
+    private List<Mensaje> Mensaje;
 
     private Connection connection;
     private Session session;
@@ -34,6 +38,7 @@ public class AgenciaViajes implements Runnable {
         this.Id = Id;
         this.Nombre = "" + NombreAgencias.getNombre();
         this.Sem_Agencia_Viajes = Sem_Agencia_Viajes;
+        this.Mensaje = new ArrayList<>(1);
 
         Realizacion_Pago = null;
         Realizacion_Cancelacion = null;
@@ -78,25 +83,38 @@ public class AgenciaViajes implements Runnable {
         Confirmacion_Pago = session.createQueue(QUEUE + "Confirmacion_Pago.Agencia" + Id );
         Respuesta_Cancelacion = session.createQueue(QUEUE + "Respuesta_Cancelacion.Agencia" + Id );
 
+        MessageConsumer Consumer_Agencia_Disponibilidad = session.createConsumer(Respuesta_Disponibilidad);
+        Consumer_Agencia_Disponibilidad.setMessageListener(new TextMsgListenerGestion("Disponibilidad", Mensaje));
+
+        MessageConsumer Consumer_Agencia_Reserva = session.createConsumer(Confirmacion_Reserva);
+        Consumer_Agencia_Reserva.setMessageListener(new TextMsgListenerGestion("Reserva", Mensaje));
+
+        MessageConsumer Consumer_Agencia_Pago = session.createConsumer(Confirmacion_Pago);
+        Consumer_Agencia_Pago.setMessageListener(new TextMsgListenerGestion("Pago", Mensaje));
+
+        MessageConsumer Consumer_Agencia_Cancelacion = session.createConsumer(Respuesta_Cancelacion);
+        Consumer_Agencia_Cancelacion.setMessageListener(new TextMsgListenerGestion("Cancelacion", Mensaje));
+
+
         connection.start();
     }
 
     public void execution() throws Exception {
         ComprobarDisponibilidad();
-        Mensaje Respuesta_Servidor = RecibirMensaje( Respuesta_Disponibilidad );
+        Mensaje Respuesta_Servidor = RecibirMensaje( Mensaje );
 
         RealizarReserva( Respuesta_Servidor );
-        Respuesta_Servidor = RecibirMensaje( Confirmacion_Reserva );
+        Respuesta_Servidor = RecibirMensaje( Mensaje );
 
         if( !Respuesta_Servidor.isReserva_Correcta() ){
             System.out.println( TEXTO_ROJO + "No habia plazas suficientes y por tanto la peticion de reserva no se ha podido realizar correctamente." + RESET_COLOR);
         }else {
             RealizarPagoReserva( Respuesta_Servidor );
-            Respuesta_Servidor = RecibirMensaje(Confirmacion_Pago);
+            Respuesta_Servidor = RecibirMensaje(Mensaje);
 
             if ( Respuesta_Servidor.isPago_Correcto() && Numero_Aleatorio.nextInt(100) <= PROBABILIDAD_CANCELACION ) {
                 CancelarReserva( Respuesta_Servidor );
-                RecibirMensaje( Respuesta_Cancelacion );
+                RecibirMensaje( Mensaje );
                 System.out.println( TEXTO_ROJO + "AG--> Agencia con Nombre: '" + Nombre + "' e Id: '" + Id + "' finalmente ha cancelado la reserva y no se va de vacaciones. " + RESET_COLOR);
             }else{
                 System.out.println( TEXTO_VERDE + "AG--> Agencia con Nombre: '" + Nombre + "' e Id: '" + Id + "' se va de vacaciones. " + RESET_COLOR);
@@ -190,20 +208,12 @@ public class AgenciaViajes implements Runnable {
 
     /**
      * Metodo que recibe un mensaje del servidor y lo decodifica.
-     * @param Buzon Buzon por donde se va a recibir el mensaje.
      * @return El mensaje que ha sido recibido del servidor decodificado.
      * @throws JMSException Si ocurre algún error durante el proceso de recibir el mensaje.
      */
-    private Mensaje RecibirMensaje( Destination Buzon ) throws JMSException, InterruptedException {
+    private Mensaje RecibirMensaje( List<Mensaje> Mensaje ) throws JMSException, InterruptedException{
         Sem_Agencia_Viajes.get(Id).acquire();
-
-        GsonUtil<Mensaje> gsonUtil = new GsonUtil<>();
-        MessageConsumer Consumer_Agencia = session.createConsumer( Buzon );
-        TextMessage Mensaje_Codificado = (TextMessage) Consumer_Agencia.receive();
-        Mensaje Respuesta_Servidor = gsonUtil.decode( Mensaje_Codificado.getText(), Mensaje.class );
-        Consumer_Agencia.close();
-
-        System.out.println( TEXTO_MORADO + "AGENCIA VIAJE----> Se ha recibido un mensaje: " + Respuesta_Servidor.toString() + ". " + RESET_COLOR );
+        Mensaje Respuesta_Servidor = Mensaje.remove(0);
         return Respuesta_Servidor;
     }
 

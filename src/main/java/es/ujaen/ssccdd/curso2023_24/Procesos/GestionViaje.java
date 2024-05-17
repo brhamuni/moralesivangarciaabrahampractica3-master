@@ -19,8 +19,6 @@ public class GestionViaje implements Runnable {
     private final List<Mensaje> Lista_Peticiones_Reserva;
     private final List<Mensaje> Lista_Peticiones_Pago;
     private final List<Mensaje> Lista_Peticiones_Cancelacion;
-    private final List<Semaphore> Sem_Clientes_Particulares;
-    private final List<Semaphore> Sem_Agencias_Viaje;
     private int Contador_Agencia;
 
     private Connection connection;
@@ -38,10 +36,8 @@ public class GestionViaje implements Runnable {
     /**
      * Constructor parametrizado de la clase GestionViaje.
      * @param Num_Clientes Número de clientes.
-     * @param Sem_Clientes_Particulares Array de semáforos para clientes particulares.
-     * @param Sem_Agencias_Viaje Array de semáforos para agencias de viaje.
      */
-    public GestionViaje( int Num_Clientes, List<Semaphore> Sem_Clientes_Particulares, List<Semaphore> Sem_Agencias_Viaje ) {
+    public GestionViaje( int Num_Clientes ) {
         this.Num_Clientes = Num_Clientes;
         this.Lista_Viajes = new ArrayList<>();
         this.Lista_Estancias = new ArrayList<>();
@@ -50,8 +46,6 @@ public class GestionViaje implements Runnable {
         this.Lista_Peticiones_Reserva = new ArrayList<>();
         this.Lista_Peticiones_Pago = new ArrayList<>();
         this.Lista_Peticiones_Cancelacion = new ArrayList<>();
-        this.Sem_Clientes_Particulares = Sem_Clientes_Particulares;
-        this.Sem_Agencias_Viaje = Sem_Agencias_Viaje;
         this.Contador_Agencia = 0;
 
         Preguntar_Disponibilidad = new ArrayList<>(NUM_TIPOS_CLIENTES);
@@ -174,10 +168,10 @@ public class GestionViaje implements Runnable {
 
             if( Pregunta_Cliente.getTipo_Cliente() == TipoCliente.PARTICULAR ) {
                 System.out.println( "SER--> Envia un mensaje al cliente con Nombre: " + Pregunta_Cliente.getNombre_Cliente() + " e Id: '" + Pregunta_Cliente.getId_Cliente() + "' con la disponibilidades." );
-                EnviarMensaje( Pregunta_Cliente, Respuesta_Disponibilidad[0][Pregunta_Cliente.getId_Cliente()], Sem_Clientes_Particulares.get(Pregunta_Cliente.getId_Cliente()) );
+                EnviarMensaje( Pregunta_Cliente, Respuesta_Disponibilidad[0][Pregunta_Cliente.getId_Cliente()] );
             }else if( Pregunta_Cliente.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 System.out.println( "SER--> Envia un mensaje a la agencia con Nombre: " + Pregunta_Cliente.getNombre_Cliente() + " e Id: '" + Pregunta_Cliente.getId_Cliente() + "' con la disponibilidades." );
-                EnviarMensaje( Pregunta_Cliente, Respuesta_Disponibilidad[1][Pregunta_Cliente.getId_Cliente()], Sem_Agencias_Viaje.get(Pregunta_Cliente.getId_Cliente()) );
+                EnviarMensaje( Pregunta_Cliente, Respuesta_Disponibilidad[1][Pregunta_Cliente.getId_Cliente()] );
             }
 
         }else if( !Lista_Cliente_Particular.isEmpty() ){
@@ -185,7 +179,7 @@ public class GestionViaje implements Runnable {
             ObtenerViajesDisponibles( Pregunta_Cliente );
             ObtenerEstanciasDisponibles( Pregunta_Cliente );
             System.out.println( "SER--> Envia un mensaje al cliente con Nombre: " + Pregunta_Cliente.getNombre_Cliente() + " e Id: '" + Pregunta_Cliente.getId_Cliente() + "' con la disponibilidades." );
-            EnviarMensaje( Pregunta_Cliente, Respuesta_Disponibilidad[0][Pregunta_Cliente.getId_Cliente()], Sem_Clientes_Particulares.get(Pregunta_Cliente.getId_Cliente()) );
+            EnviarMensaje( Pregunta_Cliente, Respuesta_Disponibilidad[0][Pregunta_Cliente.getId_Cliente()] );
         }
     }
 
@@ -229,10 +223,10 @@ public class GestionViaje implements Runnable {
 
             if( Peticion_Reserva.getTipo_Cliente() == TipoCliente.PARTICULAR ) {
                 System.out.println( "SER--> Envia un mensaje al cliente con Nombre: " + Peticion_Reserva.getNombre_Cliente() + " e Id: '" + Peticion_Reserva.getId_Cliente() + "' con la confirmacion de la reserva." );
-                EnviarMensaje( Peticion_Reserva, Confirmacion_Reserva[0][Peticion_Reserva.getId_Cliente()], Sem_Clientes_Particulares.get(Peticion_Reserva.getId_Cliente()) );
+                EnviarMensaje( Peticion_Reserva, Confirmacion_Reserva[0][Peticion_Reserva.getId_Cliente()] );
             }else if( Peticion_Reserva.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 System.out.println( "SER--> Envia un mensaje a la agencia con Nombre: " + Peticion_Reserva.getNombre_Cliente() + " e Id: '" + Peticion_Reserva.getId_Cliente() + "' con la confirmacion de la reserva." );
-                EnviarMensaje( Peticion_Reserva, Confirmacion_Reserva[1][Peticion_Reserva.getId_Cliente()], Sem_Agencias_Viaje.get(Peticion_Reserva.getId_Cliente()) );
+                EnviarMensaje( Peticion_Reserva, Confirmacion_Reserva[1][Peticion_Reserva.getId_Cliente()] );
             }
         }
     }
@@ -248,10 +242,10 @@ public class GestionViaje implements Runnable {
 
             if( Pago_Reserva.getTipo_Cliente() == TipoCliente.PARTICULAR ) {
                 System.out.println( "SER--> Envia un mensaje al cliente con Nombre: " + Pago_Reserva.getNombre_Cliente() + " e Id: '" + Pago_Reserva.getId_Cliente() + "' con la confirmacion del pago." );
-                EnviarMensaje( Pago_Reserva, Confirmacion_Pago[0][Pago_Reserva.getId_Cliente()],Sem_Clientes_Particulares.get(Pago_Reserva.getId_Cliente()) );
+                EnviarMensaje( Pago_Reserva, Confirmacion_Pago[0][Pago_Reserva.getId_Cliente()] );
             }else if(Pago_Reserva.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 System.out.println( "SER--> Envia un mensaje a la agencia con Nombre: " + Pago_Reserva.getNombre_Cliente() + " e Id: '" + Pago_Reserva.getId_Cliente() + "' con la confirmacion del pago." );
-                EnviarMensaje( Pago_Reserva, Confirmacion_Pago[1][Pago_Reserva.getId_Cliente()],Sem_Agencias_Viaje.get(Pago_Reserva.getId_Cliente()) );
+                EnviarMensaje( Pago_Reserva, Confirmacion_Pago[1][Pago_Reserva.getId_Cliente()] );
             }
         }
     }
@@ -266,10 +260,10 @@ public class GestionViaje implements Runnable {
 
             if( Peticion_Cancelacion.getTipo_Cliente() == TipoCliente.PARTICULAR ) {
                 System.out.println( "SER--> Envia un mensaje al cliente con Nombre: " + Peticion_Cancelacion.getNombre_Cliente() + " e Id: '" + Peticion_Cancelacion.getId_Cliente() + "' con la confirmacion de la cancelacion." );
-                EnviarMensaje( Peticion_Cancelacion, Respuesta_Cancelacion[0][Peticion_Cancelacion.getId_Cliente()],Sem_Clientes_Particulares.get(Peticion_Cancelacion.getId_Cliente()) );
+                EnviarMensaje( Peticion_Cancelacion, Respuesta_Cancelacion[0][Peticion_Cancelacion.getId_Cliente()] );
             }else if( Peticion_Cancelacion.getTipo_Cliente() == TipoCliente.AGENCIA ){
                 System.out.println( "SER--> Envia un mensaje a la agencia con Nombre: " + Peticion_Cancelacion.getNombre_Cliente() + " e Id: '" + Peticion_Cancelacion.getId_Cliente() + "' con la confirmacion de la cancelacion." );
-                EnviarMensaje( Peticion_Cancelacion, Respuesta_Cancelacion[1][Peticion_Cancelacion.getId_Cliente()], Sem_Agencias_Viaje.get(Peticion_Cancelacion.getId_Cliente()));
+                EnviarMensaje( Peticion_Cancelacion, Respuesta_Cancelacion[1][Peticion_Cancelacion.getId_Cliente()] );
             }
         }
     }
@@ -334,18 +328,15 @@ public class GestionViaje implements Runnable {
      * Método para codificar y enviar un mensaje al cliente correspondiente.
      * @param MensajeCliente Mensaje que va a ser codificado y posteriormente enviado al cliente.
      * @param Buzon Buzon por dónde se va a enviar el mensaje.
-     * @param Semaforo_Desbloquear Semáforo a liberar después de enviar el mensaje.
      * @throws JMSException Si ocurre algún error durante el proceso de envío del mensaje.
      */
-    private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon, Semaphore Semaforo_Desbloquear ) throws JMSException{
+    private void EnviarMensaje( Mensaje MensajeCliente, Destination Buzon ) throws JMSException{
         MensajeCliente.setTipo_Cliente( TipoCliente.SERVIDOR );
 
         GsonUtil<Mensaje> gsonUtil = new GsonUtil<>();
         MessageProducer producer = session.createProducer(Buzon);
         producer.send(session.createTextMessage(gsonUtil.encode(MensajeCliente, Mensaje.class)));
         producer.close();
-
-        Semaforo_Desbloquear.release();
     }
 
     /** Método que cierra la conexión con el servidor, liberando todos los recursos asociados. */
