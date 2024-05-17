@@ -59,8 +59,8 @@ public class Main {
         // Cuerpo de ejecución
         System.out.println( "Hilo(Principal) Comienza su ejecución " );
         CreacionEjecucionGestionViaje( Ejecucion_Procesos,Lista_Tareas );
-        CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas );
-        CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas );
+        //CreacionEjecucionClientesParticulares( Ejecucion_Procesos, Lista_Tareas );
+        //CreacionEjecucionAgenciasViajes( Ejecucion_Procesos, Lista_Tareas );
 
         // Resultados ejecucion.
         EsperaFinalizacionPrograma( Ejecucion_Procesos, Ejecucion, Fin_Ejecucion, Lista_Tareas );
