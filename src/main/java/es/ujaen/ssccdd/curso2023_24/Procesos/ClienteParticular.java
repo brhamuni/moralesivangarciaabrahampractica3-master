@@ -88,7 +88,7 @@ public class ClienteParticular implements Runnable {
         Consumer_Cliente_Disponibilidad.setMessageListener(new TextMsgListenerClientes("Disponibilidad", Mensaje, Sem_Clientes_Particulares));
 
         MessageConsumer Consumer_Cliente_Reserva = session.createConsumer(Confirmacion_Reserva);
-        Consumer_Cliente_Reserva.setMessageListener(new TextMsgListenerClientes("Reserva", Mensaje,Sem_Clientes_Particulares));
+        Consumer_Cliente_Reserva.setMessageListener(new TextMsgListenerClientes("Reserva", Mensaje, Sem_Clientes_Particulares));
 
         MessageConsumer Consumer_Cliente_Pago = session.createConsumer(Confirmacion_Pago);
         Consumer_Cliente_Pago.setMessageListener(new TextMsgListenerClientes("Pago", Mensaje, Sem_Clientes_Particulares));

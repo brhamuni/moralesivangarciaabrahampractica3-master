@@ -10,7 +10,6 @@ import es.ujaen.ssccdd.curso2023_24.Utils.Mensaje;
 import es.ujaen.ssccdd.curso2023_24.Utils.Viaje;
 import org.apache.activemq.ActiveMQConnectionFactory;
 import javax.jms.*;
-import java.nio.channels.SeekableByteChannel;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -92,7 +91,7 @@ public class AgenciaViajes implements Runnable {
         Consumer_Agencia_Reserva.setMessageListener(new TextMsgListenerAgencias("Reserva", Mensaje, Sem_Agencia_Viajes));
 
         MessageConsumer Consumer_Agencia_Pago = session.createConsumer(Confirmacion_Pago);
-        Consumer_Agencia_Pago.setMessageListener(new TextMsgListenerAgencias("Pago", Mensaje, Sem_Agencia_Viajes));
+        Consumer_Agencia_Pago.setMessageListener(new TextMsgListenerAgencias("Pago", Mensaje,Sem_Agencia_Viajes));
 
         MessageConsumer Consumer_Agencia_Cancelacion = session.createConsumer(Respuesta_Cancelacion);
         Consumer_Agencia_Cancelacion.setMessageListener(new TextMsgListenerAgencias("Cancelacion", Mensaje, Sem_Agencia_Viajes));
