@@ -46,7 +46,7 @@ public interface Constantes {
     NombreUsuarios[] Estados_Disponibles_Usuarios = NombreUsuarios.values();
     NombreEstancia[] Estados_Disponibles_Estancia = NombreEstancia.values();
 
-    public static final int MAX_CLIENTES = 2;
+    public static final int MAX_CLIENTES = 4;
     public static final int MIN_CLIENTES = 1;
     public static final int MAX_PLAZAS = 7;
     public static final int MIN_PLAZAS = 4;
@@ -58,7 +58,7 @@ public interface Constantes {
     public static final double MAX_PRECIO_ESTANCIA = 900.0;
     public static final double MIN_PRECIO_VIAJE = 500.0;
     public static final double MAX_PRECIO_VIAJE = 3000.0;
-    public static final int PROBABILIDAD_CANCELACION = 20;
+    public static final int PROBABILIDAD_CANCELACION = 15;
     public static final int PROBABILIDAD_ESTANCIA = 85;
     public static final double PENALIZACION_POR_CANCELACION = 1.2;
     public static final int NUM_TIPOS_CLIENTES = 2;
